@@ -1302,7 +1302,7 @@ function rpDraw3d(dt){
       f=W*(0.95+0.05*Math.sin(now/7300)),dist=3.2,cy=H*0.47,ct=Math.cos(tilt),st=Math.sin(tilt);
   function P(x,y,z){var rx=x*cs-z*sn,rz=x*sn+z*cs;var y2=y*ct-rz*st,z2=rz*ct+y*st;var s=f/(z2+dist);
     return {x:W/2+rx*s,y:cy-y2*s,s:s,z:z2};}
-  var px=function(q){return 2.4*dpr*q.s*dist/f;};
+  var px=function(q){return Math.min(4*dpr,2.4*dpr*q.s*dist/f);};
   /* stars */
   if(!RP.stars){RP.stars=[];for(var i=0;i<90;i++)RP.stars.push([Math.random(),Math.random()*0.6,Math.random()]);}
   RP.stars.forEach(function(s){var a=0.25+0.5*Math.abs(Math.sin(now/900*s[2]+s[0]*9));g.fillStyle="rgba(255,255,255,"+a.toFixed(2)+")";
