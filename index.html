@@ -1221,17 +1221,16 @@ if(!PRIVATE){
    total counts down, the bar of accounts drains and each one goes green as
    it dies. Pure display — driven by the same engine as everything else. */
 var RP={t:0,playing:false,raf:null,last:0,perMonth:700};
-function rpStop(){RP.playing=false;if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;}
+function rpStop(){RP.playing=false;if(RP.mode!=="3d"){if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}}
 function rpFrame(now){
-  if(!RP.playing)return;
-  var p=plan(),n=p.pts.length-1;
-  if(RP.last)RP.t+=(now-RP.last)/RP.perMonth;RP.last=now;
-  if(RP.t>=n){RP.t=n;RP.playing=false;}
+  var p=plan(),n=p.pts.length-1,dt=RP.last?now-RP.last:0;RP.last=now;
+  if(RP.playing){RP.t+=dt/RP.perMonth;if(RP.t>=n){RP.t=n;RP.playing=false;var b=document.getElementById("rp-play");if(b)b.textContent="\u21BA Again";}}
+  RP.spin+=dt*0.00035;
   rpPaint();
-  if(RP.playing)RP.raf=requestAnimationFrame(rpFrame);else{RP.last=0;var b=document.getElementById("rp-play");if(b)b.textContent="\u21BA Again";}
+  if(RP.playing||(RP.mode==="3d"&&FOLDS.replay&&tab==="plan"))RP.raf=requestAnimationFrame(rpFrame);else{RP.raf=null;RP.last=0;}
 }
-function rpPlay(){var p=plan(),n=p.pts.length-1;if(RP.t>=n)RP.t=0;RP.playing=true;RP.last=0;
-  var b=document.getElementById("rp-play");if(b)b.textContent="\u2016 Pause";RP.raf=requestAnimationFrame(rpFrame);}
+function rpPlay(){var p=plan(),n=p.pts.length-1;if(RP.t>=n)RP.t=0;RP.playing=true;
+  var b=document.getElementById("rp-play");if(b)b.textContent="\u2016 Pause";if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
 function rpAt(t){var p=plan(),k=Math.floor(t),f=t-k,a=p.pts[Math.min(k,p.pts.length-1)],b=p.pts[Math.min(k+1,p.pts.length-1)],o={};
   planAccounts().forEach(function(x){o[x.name]=(a.bal[x.name]||0)*(1-f)+(b.bal[x.name]||0)*f;});return o;}
 function rpPaint(){
@@ -1242,6 +1241,7 @@ function rpPaint(){
   if(!m)return;
   var k=Math.min(Math.floor(RP.t),p.pts.length-1);
   m.textContent=keyFromMi(i0+k);T.textContent=money(tot);
+  if(RP.mode==="3d")rpDraw3d();
   var full=p.pts[0].total||1;
   bar.innerHTML=acc.filter(function(x){return x.current>0;}).sort(rank).map(function(x){
     var w=Math.max(0,bal[x.name])/full*100,dead=bal[x.name]<=0.5;
@@ -1262,7 +1262,8 @@ function viewReplay(){
    '<div class="card pad" style="text-align:center">'+
      '<div class="eyebrow" id="rp-month">'+keyFromMi(p.pts[0].i)+'</div>'+
      '<div class="num big" id="rp-total" style="font-size:44px;margin:6px 0 10px">'+money(p.pts[0].total)+'</div>'+
-     '<svg viewBox="0 0 1000 150" style="width:100%;display:block" preserveAspectRatio="none">'+
+     (RP.mode==="3d"?'<canvas id="rp-3d" style="width:100%;display:block"></canvas>':'')+
+     '<svg viewBox="0 0 1000 150" style="width:100%;display:'+(RP.mode==="3d"?'none':'block')+'" preserveAspectRatio="none">'+
        '<path id="rp-area" d="" fill="rgba(255,255,255,.08)"/>'+
        '<path id="rp-line" d="" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
        '<circle id="rp-dot" r="6" fill="#fff"/></svg>'+
@@ -1270,10 +1271,50 @@ function viewReplay(){
      '<div id="rp-killed" style="text-align:left;min-height:26px"></div>'+
      '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">'+
        '<button class="btn" id="rp-play" data-act="rpplay">\u25B6 Play</button>'+
-       '<button class="btn ghost" data-act="rpspeed" style="padding:10px 14px">'+(RP.perMonth<=350?"Fast":"Normal")+'</button></div>'+
+       '<button class="btn ghost" data-act="rpspeed" style="padding:10px 14px">'+(RP.perMonth<=350?"Fast":"Normal")+'</button>'+
+       '<button class="btn ghost" data-act="rpmode" style="padding:10px 14px">'+(RP.mode==="3d"?"Flat":"4D")+'</button></div>'+
      '<div class="note" style="margin-top:12px">Every month of the plan from today\\u2019s numbers, about a second each. The bar is every open account, biggest first; each turns green the month it dies.</div></div></div>';
 }
 
+/* ---------------- 4D MODE ----------------
+   The same replay in three dimensions plus time: every open account is a
+   column on a slowly turning floor, height is what is owed, and as the
+   months pass the columns sink and turn green the month they die. */
+RP.mode="flat";RP.spin=0;
+function rpCanvas(){var c=document.getElementById("rp-3d");if(!c)return null;
+  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.62);
+  if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.height=h+"px";}
+  return c;}
+function rpDraw3d(){
+  var c=rpCanvas();if(!c)return;var g=c.getContext("2d"),W=c.width,H=c.height,dpr=window.devicePixelRatio||1;
+  g.clearRect(0,0,W,H);
+  var p=plan(),bal=rpAt(RP.t),acc=planAccounts().filter(function(x){return x.current>0;}).sort(rank);
+  var n=acc.length,full=Math.max.apply(null,acc.map(function(x){return x.current;}))||1;
+  var cam={y:H*0.42,f:W*0.95,dist:2.6},R=1.0;
+  function proj(x,y,z){var zz=z+cam.dist,s=cam.f/zz;return {x:W/2+x*s,y:cam.y-y*s+ (0.35*s),s:s};}
+  var th=RP.spin;
+  /* floor grid */
+  g.strokeStyle="rgba(255,255,255,.07)";g.lineWidth=dpr;
+  for(var i=-4;i<=4;i++){var a=proj(i*0.35,-0.5,-1.4),b=proj(i*0.35,-0.5,1.4);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();
+    var c1=proj(-1.4,-0.5,i*0.35),c2=proj(1.4,-0.5,i*0.35);g.beginPath();g.moveTo(c1.x,c1.y);g.lineTo(c2.x,c2.y);g.stroke();}
+  var cols=acc.map(function(x,i){var ang=th+i/n*Math.PI*2,px=Math.cos(ang)*R,pz=Math.sin(ang)*R*0.55;
+    var b=Math.max(0,bal[x.name]),h=b/full*1.1,dead=b<=0.5;return {x:x,px:px,pz:pz,h:h,dead:dead,b:b};})
+    .sort(function(a,b){return a.pz-b.pz;});
+  var colr={CARD:"227,25,55",LOAN:"62,106,225",BNPL:"245,158,11"};
+  cols.forEach(function(k){
+    var base=proj(k.px,-0.5,k.pz),top=proj(k.px,-0.5+k.h,k.pz),w=Math.max(3*dpr,0.09*base.s);
+    var rgb=k.dead?"34,197,94":(colr[k.x.kind]||"255,255,255");
+    var depth=(k.pz+0.6)/1.2;
+    if(k.dead){g.fillStyle="rgba("+rgb+",.9)";g.beginPath();g.ellipse(base.x,base.y,w*0.7,w*0.28,0,0,Math.PI*2);g.fill();return;}
+    var gr=g.createLinearGradient(base.x-w/2,0,base.x+w/2,0);
+    gr.addColorStop(0,"rgba("+rgb+","+(0.35+0.4*depth)+")");gr.addColorStop(0.5,"rgba("+rgb+","+(0.7+0.3*depth)+")");gr.addColorStop(1,"rgba("+rgb+","+(0.3+0.3*depth)+")");
+    g.fillStyle=gr;g.fillRect(base.x-w/2,top.y,w,base.y-top.y);
+    g.fillStyle="rgba(255,255,255,"+(0.35+0.4*depth)+")";g.beginPath();g.ellipse(top.x,top.y,w/2,w*0.2,0,0,Math.PI*2);g.fill();
+    g.fillStyle="rgba(0,0,0,.35)";g.beginPath();g.ellipse(base.x,base.y,w*0.9,w*0.22,0,0,Math.PI*2);g.fill();
+    if(k.h>0.25&&depth>0.55){g.fillStyle="rgba(255,255,255,.75)";g.font=(9*dpr)+"px -apple-system,Helvetica,sans-serif";g.textAlign="center";
+      g.fillText(k.x.name,top.x,top.y-6*dpr);}
+  });
+}
 /* ---------------- shell ---------------- */
 var TABS=[["today","Today","◉"],["plan","Plan","◈"],["accounts","Accounts","▤"]];
 var FOLDS={replay:false,wind:false,credit:false,spend:false,month:false,sync:false};
@@ -1281,7 +1322,7 @@ function fold(id,title,sub,html){
   return '<details class="fold" data-fold="'+id+'"'+(FOLDS[id]?' open':'')+'><summary>'+title+(sub?'<small>'+sub+'</small>':'')+'</summary><div class="body">'+html+'</div></details>';
 }
 document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.fold){FOLDS[d.dataset.fold]=d.open;
-  if(d.dataset.fold==="replay"){if(d.open){RP.t=0;rpPlay();}else rpStop();}}},true);
+  if(d.dataset.fold==="replay"){if(d.open){RP.t=0;rpPlay();}else{RP.playing=false;if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}}}},true);
 function render(){
   bust();if(RP.raf){cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
   document.getElementById("nav").innerHTML=TABS.map(function(x){
@@ -1301,7 +1342,7 @@ function render(){
     viewAccounts()+fold("month","This month, day by day","every draft and paycheck",viewMonth())+
       fold("sync","Sharing and reset","",viewSync()))+'</div>';
   if(tab==="today")paintSpend();
-  if(tab==="plan"&&FOLDS.replay){rpPaint();if(RP.playing)RP.raf=requestAnimationFrame(rpFrame);}
+  if(tab==="plan"&&FOLDS.replay){rpPaint();if(RP.playing||RP.mode==="3d")RP.raf=requestAnimationFrame(rpFrame);}
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -1317,6 +1358,7 @@ document.addEventListener("click",function(e){
     var wi=document.getElementById("windin");if(wi)wi.value=windTest;paintWind();return;}
   var act=b.dataset.act;
   if(act==="rpplay"){if(RP.playing){rpStop();b.textContent="\u25B6 Play";}else rpPlay();return;}
+  if(act==="rpmode"){RP.mode=RP.mode==="3d"?"flat":"3d";var pl=RP.playing;render();if(pl)rpPlay();else if(RP.mode==="3d"&&!RP.raf)RP.raf=requestAnimationFrame(rpFrame);return;}
   if(act==="rpspeed"){RP.perMonth=RP.perMonth<=350?700:300;b.textContent=RP.perMonth<=350?"Fast":"Normal";return;}
   if(act==="applywind"){
     var wp=windfallPlan(windTest);
