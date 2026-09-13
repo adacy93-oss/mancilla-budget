@@ -1250,63 +1250,58 @@ function viewReplay(){
      '<canvas id="rp-3d" style="width:100%;display:block;touch-action:pan-y"></canvas></div>';
 }
 /* ---------------- 4D MODE ----------------
-   The payoff as a line chart in three dimensions, slowly turning. The
-   bright line is the total; behind it, one faint line per account, each
-   on its own plane in depth, so the chart is a stack of lines you can see
-   through. The lines draw themselves as the months run. */
-RP.done=false;RP.doneAt=0;RP.hold=0;RP.spin=0.3;
+   One line — the total — drawn as a glowing ribbon in three dimensions on
+   a thin floor grid, easing left and right so it never turns unreadable.
+   It draws itself as the months run, white at the start, green as it
+   reaches zero. */
+RP.done=false;RP.doneAt=0;RP.hold=0;
 function rpCanvas(){var c=document.getElementById("rp-3d");if(!c)return null;
-  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.6);
+  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.58);
   if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.height=h+"px";}
   return c;}
 function rpDraw3d(dt){
   var c=rpCanvas();if(!c)return;var g=c.getContext("2d"),W=c.width,H=c.height,dpr=window.devicePixelRatio||1,now=performance.now();
   g.clearRect(0,0,W,H);
-  var p=plan(),n0=p.pts.length-1,start=p.pts[0].total||1,acc=planAccounts().filter(function(x){return x.current>0;}).sort(rank);
-  var t=RP.t,k=Math.min(Math.floor(t),n0),fr=t-k;
-  RP.spin+=dt*0.00022;
-  var th=RP.spin,cs=Math.cos(th),sn=Math.sin(th),tilt=0.42,ct=Math.cos(tilt),st=Math.sin(tilt);
-  var f=W*0.95,dist=3.4,cy=H*0.56,SX=2.2,SY=1.2,SZ=1.6;
+  var p=plan(),n0=p.pts.length-1,start=p.pts[0].total||1,t=RP.t,k=Math.min(Math.floor(t),n0),fr=t-k;
+  var th=0.55*Math.sin(now/6500),cs=Math.cos(th),sn=Math.sin(th),tilt=0.38,ct=Math.cos(tilt),st=Math.sin(tilt);
+  var f=W*1.0,dist=3.6,cy=H*0.6,SX=2.4,SY=1.15,SZ=0.9;
   function P(x,y,z){var rx=x*cs-z*sn,rz=x*sn+z*cs;var y2=y*ct-rz*st,z2=rz*ct+y*st;var s=f/(z2+dist);return {x:W/2+rx*s,y:cy-y2*s,z:z2,s:s};}
-  function X(m){return -SX/2+m/n0*SX;}
-  function Y(v){return v/start*SY;}
-  var n=acc.length,Z=function(i){return n>1?-SZ/2+i/(n-1)*SZ:0;};
-  /* floor: month lines and a baseline, very faint */
+  function X(m){return -SX/2+m/n0*SX;}function Y(v){return v/start*SY;}
+  function tv(m){return p.pts[Math.min(m,n0)].total;}
+  var tot=tv(k)+(tv(Math.min(k+1,n0))-tv(k))*fr;
+  /* floor */
   g.lineWidth=dpr;
-  for(var m=0;m<=n0;m++){var a=P(X(m),0,-SZ/2-0.15),b=P(X(m),0,SZ/2+0.15),on=m<=t;
-    g.strokeStyle="rgba(255,255,255,"+(on?0.14:0.06)+")";g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();}
-  for(var i=0;i<n;i++){var a2=P(X(0),0,Z(i)),b2=P(X(n0),0,Z(i));g.strokeStyle="rgba(255,255,255,.05)";g.beginPath();g.moveTo(a2.x,a2.y);g.lineTo(b2.x,b2.y);g.stroke();}
-  /* one line per account, drawn as far as the replay has got */
-  function val(name,m){return Math.max(0,p.pts[Math.min(m,n0)].bal[name]||0);}
-  function curVal(name){var a=val(name,k),b=val(name,Math.min(k+1,n0));return a+(b-a)*fr;}
-  var colr={CARD:"227,25,55",LOAN:"62,106,225",BNPL:"245,158,11"};
-  var order=acc.map(function(x,i){return {x:x,i:i,z:P(0,0,Z(i)).z};}).sort(function(u,v){return v.z-u.z;});
-  order.forEach(function(o){var x=o.x,i=o.i,zz=Z(i),depth=Math.max(0,Math.min(1,1-(o.z+1)/2));
-    var col=colr[x.kind]||"255,255,255",al=0.18+0.35*depth;
-    g.strokeStyle="rgba("+col+","+al.toFixed(2)+")";g.lineWidth=1.2*dpr;g.beginPath();
-    for(var m2=0;m2<=k;m2++){var q=P(X(m2),Y(val(x.name,m2)),zz);m2?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);}
-    var qe=P(X(t),Y(curVal(x.name)),zz);g.lineTo(qe.x,qe.y);g.stroke();
-    /* fill down to the floor, very faint */
-    g.lineTo(P(X(t),0,zz).x,P(X(t),0,zz).y);var q0=P(X(0),0,zz);g.lineTo(q0.x,q0.y);g.closePath();g.fillStyle="rgba("+col+","+(al*0.12).toFixed(3)+")";g.fill();
-    if(curVal(x.name)>0.5){g.fillStyle="rgba("+col+","+(0.5+0.5*depth).toFixed(2)+")";g.beginPath();g.arc(qe.x,qe.y,1.8*dpr,0,Math.PI*2);g.fill();}
-  });
-  /* the total, bold, on the centre plane */
-  var tot=0;acc.forEach(function(x){tot+=curVal(x.name);});
-  g.strokeStyle="rgba(255,255,255,.95)";g.lineWidth=2.4*dpr;g.lineJoin="round";g.lineCap="round";g.beginPath();
-  for(var m3=0;m3<=k;m3++){var q3=P(X(m3),Y(p.pts[m3].total),0);m3?g.lineTo(q3.x,q3.y):g.moveTo(q3.x,q3.y);}
-  var qt=P(X(t),Y(tot),0);g.lineTo(qt.x,qt.y);g.stroke();
-  /* the rest of the path, as a hint */
-  g.strokeStyle="rgba(255,255,255,.18)";g.lineWidth=dpr;g.setLineDash([3*dpr,4*dpr]);g.beginPath();g.moveTo(qt.x,qt.y);
-  for(var m4=k+1;m4<=n0;m4++){var q4=P(X(m4),Y(p.pts[m4].total),0);g.lineTo(q4.x,q4.y);}g.stroke();g.setLineDash([]);
-  /* the moving point */
-  var gl=g.createRadialGradient(qt.x,qt.y,0,qt.x,qt.y,14*dpr);gl.addColorStop(0,"rgba(255,255,255,.55)");gl.addColorStop(1,"rgba(255,255,255,0)");
-  g.fillStyle=gl;g.beginPath();g.arc(qt.x,qt.y,14*dpr,0,Math.PI*2);g.fill();
-  g.fillStyle="#fff";g.beginPath();g.arc(qt.x,qt.y,3.5*dpr,0,Math.PI*2);g.fill();
-  /* first and last month labels on the floor */
-  g.fillStyle="rgba(255,255,255,.45)";g.font=(8.5*dpr)+"px ui-monospace,Menlo,monospace";g.textAlign="center";
-  var l0=P(X(0),0,SZ/2+0.3),l1=P(X(n0),0,SZ/2+0.3);g.fillText(keyFromMi(p.pts[0].i),l0.x,l0.y);g.fillText(keyFromMi(p.pts[n0].i),l1.x,l1.y);
+  for(var m=0;m<=n0;m++){var a=P(X(m),0,-SZ/2),b=P(X(m),0,SZ/2);g.strokeStyle="rgba(255,255,255,"+(m<=t?0.16:0.07)+")";g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();}
+  for(var z=-1;z<=1;z++){var a1=P(X(0),0,z*SZ/2),b1=P(X(n0),0,z*SZ/2);g.strokeStyle="rgba(255,255,255,.09)";g.beginPath();g.moveTo(a1.x,a1.y);g.lineTo(b1.x,b1.y);g.stroke();}
+  /* height guides at the start */
+  for(var q=1;q<=3;q++){var v=start*q/3,a2=P(X(0),Y(v),-SZ/2),b2=P(X(0),Y(v),SZ/2);g.strokeStyle="rgba(255,255,255,.08)";g.beginPath();g.moveTo(a2.x,a2.y);g.lineTo(b2.x,b2.y);g.stroke();
+    g.fillStyle="rgba(255,255,255,.35)";g.font=(8*dpr)+"px ui-monospace,Menlo,monospace";g.textAlign="right";g.fillText(money(v),a2.x-5*dpr,a2.y+3*dpr);}
+  /* the path ahead, faint */
+  var pts=[];for(var m2=0;m2<=n0;m2++)pts.push(P(X(m2),Y(tv(m2)),0));
+  g.strokeStyle="rgba(255,255,255,.14)";g.lineWidth=1.2*dpr;g.setLineDash([3*dpr,5*dpr]);g.beginPath();pts.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();g.setLineDash([]);
+  /* the ribbon so far */
+  var head=P(X(t),Y(tot),0),drawn=pts.slice(0,k+1).concat([head]);
+  /* fill to the floor */
+  var floorEnd=P(X(t),0,0),floor0=P(X(0),0,0);
+  var fg=g.createLinearGradient(0,P(0,SY,0).y,0,floor0.y);fg.addColorStop(0,"rgba(255,255,255,.16)");fg.addColorStop(1,"rgba(255,255,255,0)");
+  g.fillStyle=fg;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.lineTo(floorEnd.x,floorEnd.y);g.lineTo(floor0.x,floor0.y);g.closePath();g.fill();
+  /* glow pass then the line, colour shifting white → green along it */
+  var lg=g.createLinearGradient(drawn[0].x,0,head.x,0);lg.addColorStop(0,"rgba(255,255,255,1)");lg.addColorStop(1,"rgba(34,197,94,1)");
+  g.lineJoin="round";g.lineCap="round";
+  g.strokeStyle="rgba(120,220,160,.22)";g.lineWidth=9*dpr;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();
+  g.strokeStyle=lg;g.lineWidth=3*dpr;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();
+  /* month markers along the ribbon */
+  for(var m3=0;m3<=k;m3++){g.fillStyle="rgba(255,255,255,.9)";g.beginPath();g.arc(pts[m3].x,pts[m3].y,1.8*dpr,0,Math.PI*2);g.fill();}
+  /* head */
+  var gl=g.createRadialGradient(head.x,head.y,0,head.x,head.y,16*dpr);gl.addColorStop(0,"rgba(34,197,94,.6)");gl.addColorStop(1,"rgba(34,197,94,0)");
+  g.fillStyle=gl;g.beginPath();g.arc(head.x,head.y,16*dpr,0,Math.PI*2);g.fill();
+  g.fillStyle="#fff";g.beginPath();g.arc(head.x,head.y,4*dpr,0,Math.PI*2);g.fill();
+  /* drop line from the head to the floor, and the month under it */
+  g.strokeStyle="rgba(255,255,255,.35)";g.lineWidth=dpr;g.setLineDash([2*dpr,3*dpr]);g.beginPath();g.moveTo(head.x,head.y);g.lineTo(floorEnd.x,floorEnd.y);g.stroke();g.setLineDash([]);
+  g.fillStyle="rgba(255,255,255,.7)";g.font=(8.5*dpr)+"px ui-monospace,Menlo,monospace";g.textAlign="center";g.fillText(keyFromMi(p.pts[k].i),floorEnd.x,floorEnd.y+12*dpr);
+  var l0=P(X(0),0,SZ/2),l1=P(X(n0),0,SZ/2);g.fillStyle="rgba(255,255,255,.4)";g.fillText(keyFromMi(p.pts[0].i),l0.x,l0.y+12*dpr);g.fillText(keyFromMi(p.pts[n0].i),l1.x,l1.y+12*dpr);
   if(tot<=0.5){if(!RP.done){RP.done=true;RP.doneAt=now;}var age=Math.min(1,(now-RP.doneAt)/900);
-    g.fillStyle="rgba(255,255,255,"+age.toFixed(2)+")";g.font="800 "+(22*dpr)+"px -apple-system,Helvetica,sans-serif";g.textAlign="center";g.fillText("DEBT FREE",W/2,H*0.22);}
+    g.fillStyle="rgba(34,197,94,"+age.toFixed(2)+")";g.font="800 "+(20*dpr)+"px -apple-system,Helvetica,sans-serif";g.textAlign="center";g.fillText("DEBT FREE",W/2,H*0.2);}
   else RP.done=false;
 }
 /* ---------------- shell ---------------- */
