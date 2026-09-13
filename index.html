@@ -1250,26 +1250,23 @@ function viewReplay(){
    '<div class="card" style="padding:14px 14px 12px;text-align:center">'+
      '<div class="eyebrow" id="rp-month">'+keyFromMi(p.pts[0].i)+'</div>'+
      '<div class="num big" id="rp-total" style="font-size:44px;margin:6px 0 8px">'+money(p.pts[0].total)+'</div>'+
-     '<canvas id="rp-3d" style="width:100%;display:block;touch-action:none;cursor:grab;border-radius:6px"></canvas>'+
+     '<canvas id="rp-3d" style="width:100%;display:block;touch-action:pan-y;border-radius:6px"></canvas>'+
      '<div id="rp-killed" style="text-align:left;min-height:26px;margin-top:12px"></div>'+
      '<div style="display:flex;gap:8px;justify-content:center;margin-top:8px">'+
        '<button class="btn ghost" data-act="rpspeed" style="padding:9px 14px">'+(RP.perMonth<=450?"Fast":"Normal")+'</button></div>'+
-     '<div class="note" style="margin-top:10px">Every account is a mountain, as tall as what you owe. The one being paid trembles; when an account dies its mountain collapses into the plain. The sun is fully up when you are debt free. Drag to look around.</div></div></div>';
+     '<div class="note" style="margin-top:10px">Every account is a mountain, as tall as what you owe. The one being paid trembles; when an account dies its mountain collapses into the plain. The sun is fully up when you are debt free.</div></div></div>';
 }
 /* ---------------- 4D MODE ----------------
    A mountain range at eye level, painted like an animated film: layered
    peaks fading into haze, snow on the summits, drifting clouds, a sun that
    climbs behind the range as the total falls. Every account is a mountain
    as tall as what you owe. The one being paid trembles; when an account
-   dies its mountain collapses into the plain under a puff of dust. Drag to
-   look around. */
+   dies its mountain collapses into the plain under a puff of dust. */
 RP.spin=0;RP.drag=null;RP.done=false;RP.doneAt=0;RP.hold=0;RP.tilt=0;RP.fall={};RP.wasDead={};RP.clouds=null;RP.stars=null;
 function rpCanvas(){var c=document.getElementById("rp-3d");if(!c)return null;
   var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.72);
   if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.height=h+"px";RP.clouds=null;RP.stars=null;
-    c.onpointerdown=function(e){RP.drag={x:e.clientX,y:e.clientY,s:RP.spin,t:RP.tilt};c.setPointerCapture(e.pointerId);};
-    c.onpointermove=function(e){if(RP.drag){RP.spin=Math.max(-0.5,Math.min(0.5,RP.drag.s+(e.clientX-RP.drag.x)*0.004));RP.tilt=Math.max(-0.05,Math.min(0.3,RP.drag.t+(e.clientY-RP.drag.y)*0.002));}};
-    c.onpointerup=c.onpointercancel=function(){RP.drag=null;};}
+}
   return c;}
 var TERR=null;
 function terrainSites(){
