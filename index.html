@@ -124,7 +124,7 @@ svg{width:100%;display:block}
 <div id="toast"></div>
 <script>
 "use strict";
-var START_TOTAL=48923, CAR_TOTAL=75500, VAR_BUDGET=780;
+var START_TOTAL=52253, CAR_TOTAL=75500, VAR_BUDGET=780;
 
 /* Everyday spending assumed per day in future months, once this month's
    budget no longer applies. */
@@ -202,14 +202,14 @@ function thisMonthKey(){var d=new Date();return MONLBL[d.getMonth()]+" "+d.getFu
    instalment loan or plan — it has no utilisation. */
 var SEED=[
  ["BRIGHTWAY",1217,35.99,55,5,"CARD",1650],["SEEN",950,35.99,55,15,"CARD",1000],
- ["CHARIZARD",257,35.98,144,25,"BNPL",0],["AFFIRM VIRTUAL",5294,35.98,562,5,"BNPL",0],
+ ["CHARIZARD",0,35.98,144,25,"BNPL",0],["AFFIRM VIRTUAL",5294,35.98,562,5,"BNPL",0],
  ["AFFIRM AMZN 5",609,34.00,72,1,"BNPL",0],["UPSTART 2",11629,32.32,425,28,"LOAN",0],
  ["UPSTART 1",7716,30.21,320,4,"LOAN",0],["PAYPAL",1700,29.99,32,22,"CARD",2000],
- ["AMEX ADACY",860,29.99,40,9,"CARD",1000],["AFFIRM AMZN 1",209,29.99,43,22,"BNPL",0],
- ["AFFIRM AMZN 4",151,29.99,54,1,"BNPL",0],["AFFIRM AMZN 3",149,29.98,51,27,"BNPL",0],
+ ["AMEX ADACY",0,29.99,40,9,"CARD",1000],["AFFIRM AMZN 1",0,29.99,43,22,"BNPL",0],
+ ["AFFIRM AMZN 4",0,29.99,54,1,"BNPL",0],["AFFIRM AMZN 3",0,29.98,51,27,"BNPL",0],
  ["CAP ONE VENTURE",325,29.00,25,1,"CARD",500],["SPARROW",815,28.99,42,7,"CARD",900],
- ["CAP ONE SAVOR",400,28.74,40,15,"CARD",500],["APPLE CARD",450,27.74,20,30,"CARD",500],
- ["CHASE",6700,27.49,230,17,"CARD",7200],["CREDIT ONE",188,27.49,40,15,"CARD",1750],
+ ["CAP ONE SAVOR",375,28.74,40,15,"CARD",500],["APPLE CARD",0,27.74,20,30,"CARD",500],
+ ["CHASE",0,27.49,230,17,"CARD",7200],["CREDIT ONE",0,27.49,40,15,"CARD",1750],
  ["USAA",920,27.40,45,12,"CARD",1000],["CITI COSTCO",3905,26.74,120,20,"CARD",4000],
  ["AFFIRM AMZN 2",484,24.71,109,23,"BNPL",0],["UPSTART 3",2676,0.0,243,22,"LOAN",0],
  ["BEST BUY",997,31.99,40,8,"CARD",1150],["KLARNA",1338,34.99,213,17,"BNPL",0],
@@ -250,7 +250,7 @@ var KINDCOL={CARD:"var(--red)",LOAN:"var(--blue)",BNPL:"var(--amber)",AUTO:"var(
 var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 var PRIVATE=false; /* the artifact build sets this true */
-var KEY="adacy-debt-v1";
+var KEY="adacy-debt-v2";
 var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[]};
 var tab="descent", spendTest="";
 
