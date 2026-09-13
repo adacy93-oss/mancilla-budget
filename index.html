@@ -1220,148 +1220,132 @@ if(!PRIVATE){
    A replay of the plan from today's numbers: the month ticks forward, the
    total counts down, the bar of accounts drains and each one goes green as
    it dies. Pure display — driven by the same engine as everything else. */
-var RP={t:0,playing:false,raf:null,last:0,perMonth:700};
-function rpStop(){RP.playing=false;if(RP.mode!=="3d"){if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}}
+var RP={t:0,playing:false,raf:null,last:0,perMonth:900};
+function rpStop(){RP.playing=false;if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
 function rpFrame(now){
-  var p=plan(),n=p.pts.length-1,dt=RP.last?now-RP.last:0;RP.last=now;
-  if(RP.playing){RP.t+=dt/RP.perMonth;if(RP.t>=n){RP.t=n;RP.playing=false;var b=document.getElementById("rp-play");if(b)b.textContent="\u21BA Again";}}
-  if(!RP.drag)RP.spin+=dt*0.00032;RP.dt=dt;
+  var p=plan(),n=p.pts.length-1,dt=Math.min(80,RP.last?now-RP.last:0);RP.last=now;
+  if(RP.hold){if(now>=RP.hold){RP.hold=0;RP.t=0;}}
+  else{RP.t+=dt/RP.perMonth;if(RP.t>=n){RP.t=n;RP.hold=now+3000;}}
+  RP.playing=!RP.hold;RP.dt=dt;
   rpPaint();
-  if(RP.playing||(RP.mode==="3d"&&FOLDS.replay&&tab==="plan"))RP.raf=requestAnimationFrame(rpFrame);else{RP.raf=null;RP.last=0;}
+  if(FOLDS.replay&&tab==="plan")RP.raf=requestAnimationFrame(rpFrame);else{RP.raf=null;RP.last=0;}
 }
-function rpPlay(){var p=plan(),n=p.pts.length-1;if(RP.t>=n){RP.t=0;}RP.playing=true;
-  var b=document.getElementById("rp-play");if(b)b.textContent="\u2016 Pause";if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
+function rpPlay(){RP.hold=0;RP.playing=true;if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
 function rpAt(t){var p=plan(),k=Math.floor(t),f=t-k,a=p.pts[Math.min(k,p.pts.length-1)],b=p.pts[Math.min(k+1,p.pts.length-1)],o={};
   planAccounts().forEach(function(x){o[x.name]=(a.bal[x.name]||0)*(1-f)+(b.bal[x.name]||0)*f;});return o;}
 function rpPaint(){
   var p=plan(),i0=p.pts[0].i,bal=rpAt(RP.t),tot=0,acc=planAccounts();
   acc.forEach(function(x){tot+=bal[x.name];});
-  var m=document.getElementById("rp-month"),T=document.getElementById("rp-total"),bar=document.getElementById("rp-bar"),
-      kl=document.getElementById("rp-killed"),ln=document.getElementById("rp-line"),ar=document.getElementById("rp-area"),dot=document.getElementById("rp-dot");
+  var m=document.getElementById("rp-month"),T=document.getElementById("rp-total"),kl=document.getElementById("rp-killed");
   if(!m)return;
   var k=Math.min(Math.floor(RP.t),p.pts.length-1);
   m.textContent=keyFromMi(i0+k);T.textContent=money(tot);
-  if(RP.mode==="3d")rpDraw3d(RP.dt||0);
-  var full=p.pts[0].total||1;
-  bar.innerHTML=acc.filter(function(x){return x.current>0;}).sort(rank).map(function(x){
-    var w=Math.max(0,bal[x.name])/full*100,dead=bal[x.name]<=0.5;
-    return '<div style="flex:0 0 '+(dead?0.9:Math.max(w,0.9))+'%;height:100%;background:'+(dead?'var(--green)':KINDCOL[x.kind])+';opacity:'+(dead?'1':'.85')+';transition:flex-basis .12s linear"></div>';}).join("");
+  rpDraw3d(RP.dt||0);
   var dead=acc.filter(function(x){return x.current>0&&bal[x.name]<=0.5;}).sort(function(a,b){return (p.payoff[a.name]||"").localeCompare(p.payoff[b.name]||"");});
   kl.innerHTML=dead.length?dead.map(function(x){return '<span class="pill" style="background:rgba(34,197,94,.14);color:var(--green);margin:0 6px 6px 0">\u2713 '+esc(x.name)+'</span>';}).join(""):'<span class="note">Nothing paid off yet</span>';
-  /* the line, drawn as far as the replay has got */
-  var W=1000,H=150,PL=8,PR=8,PT=10,PB=10,n=p.pts.length-1;
-  var xv=function(t){return PL+t/Math.max(n,1)*(W-PL-PR);},yv=function(v){return PT+(1-v/full)*(H-PT-PB);};
-  var d="";for(var j=0;j<=k;j++)d+=(j?"L":"M")+xv(j).toFixed(1)+","+yv(p.pts[j].total).toFixed(1);
-  d+="L"+xv(RP.t).toFixed(1)+","+yv(tot).toFixed(1);
-  ln.setAttribute("d",d);ar.setAttribute("d",d+"L"+xv(RP.t).toFixed(1)+","+yv(0)+"L"+xv(0)+","+yv(0)+"Z");
-  dot.setAttribute("cx",xv(RP.t).toFixed(1));dot.setAttribute("cy",yv(tot).toFixed(1));
 }
 function viewReplay(){
   var p=plan();
   return '<div class="grid">'+
-   '<div class="card pad" style="text-align:center">'+
+   '<div class="card" style="padding:14px 14px 12px;text-align:center">'+
      '<div class="eyebrow" id="rp-month">'+keyFromMi(p.pts[0].i)+'</div>'+
-     '<div class="num big" id="rp-total" style="font-size:44px;margin:6px 0 10px">'+money(p.pts[0].total)+'</div>'+
-     (RP.mode==="3d"?'<canvas id="rp-3d" style="width:100%;display:block;touch-action:none;cursor:grab"></canvas>':'')+
-     '<svg viewBox="0 0 1000 150" style="width:100%;display:'+(RP.mode==="3d"?'none':'block')+'" preserveAspectRatio="none">'+
-       '<path id="rp-area" d="" fill="rgba(255,255,255,.08)"/>'+
-       '<path id="rp-line" d="" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>'+
-       '<circle id="rp-dot" r="6" fill="#fff"/></svg>'+
-     '<div id="rp-bar" style="display:flex;gap:2px;height:14px;margin:14px 0 14px;border-radius:3px;overflow:hidden"></div>'+
-     '<div id="rp-killed" style="text-align:left;min-height:26px"></div>'+
-     '<div style="display:flex;gap:8px;justify-content:center;margin-top:12px">'+
-       '<button class="btn" id="rp-play" data-act="rpplay">\u25B6 Play</button>'+
-       '<button class="btn ghost" data-act="rpspeed" style="padding:10px 14px">'+(RP.perMonth<=350?"Fast":"Normal")+'</button>'+
-       '<button class="btn ghost" data-act="rpmode" style="padding:10px 14px">'+(RP.mode==="3d"?"Flat":"4D")+'</button></div>'+
-     '<div class="note" style="margin-top:12px">Every month of the plan from today\u2019s numbers, about a second each. The bar is every open account, biggest first; each turns green the month it dies.</div></div></div>';
+     '<div class="num big" id="rp-total" style="font-size:44px;margin:6px 0 8px">'+money(p.pts[0].total)+'</div>'+
+     '<canvas id="rp-3d" style="width:100%;display:block;touch-action:none;cursor:grab;border-radius:6px"></canvas>'+
+     '<div id="rp-killed" style="text-align:left;min-height:26px;margin-top:12px"></div>'+
+     '<div style="display:flex;gap:8px;justify-content:center;margin-top:8px">'+
+       '<button class="btn ghost" data-act="rpspeed" style="padding:9px 14px">'+(RP.perMonth<=450?"Fast":"Normal")+'</button></div>'+
+     '<div class="note" style="margin-top:10px">One ring per month. Each account hangs on the wall at the month it dies; the light at the end grows as the total falls. Drag to look around.</div></div></div>';
 }
-
 /* ---------------- 4D MODE ----------------
-   Your debt as one sphere, turning and rolling as it travels through a
-   starfield. Every open account is a point on its surface, sized by what is
-   owed; the account being hit this month glows. As the months pass the
-   points shrink and turn green and the sphere itself contracts, until it
-   collapses to a spark. Drag to turn it. */
-RP.mode="flat";RP.spin=0.6;RP.drag=null;RP.stars=null;RP.done=false;RP.doneAt=0;
+   You fly forward through a twisting tunnel, one ring per month, toward the
+   light at the end. Every open account hangs on the tunnel wall at the month
+   it dies, sized by what is owed, and lights up green as you pass it. The
+   light at the end grows as the total falls. Drag to look around. */
+RP.mode="3d";RP.spin=0;RP.drag=null;RP.stars=null;RP.done=false;RP.doneAt=0;RP.hold=0;RP.look={x:0,y:0};
 function rpCanvas(){var c=document.getElementById("rp-3d");if(!c)return null;
-  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.82);
+  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.9);
   if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.height=h+"px";RP.stars=null;
-    c.onpointerdown=function(e){RP.drag={x:e.clientX,y:e.clientY,s:RP.spin,t:RP.tilt||0};c.setPointerCapture(e.pointerId);};
-    c.onpointermove=function(e){if(RP.drag){RP.spin=RP.drag.s+(e.clientX-RP.drag.x)*0.012;RP.tilt=RP.drag.t+(e.clientY-RP.drag.y)*0.008;}};
+    c.onpointerdown=function(e){RP.drag={x:e.clientX,y:e.clientY,lx:RP.look.x,ly:RP.look.y};c.setPointerCapture(e.pointerId);};
+    c.onpointermove=function(e){if(RP.drag){RP.look.x=RP.drag.lx+(e.clientX-RP.drag.x)*0.9;RP.look.y=RP.drag.ly+(e.clientY-RP.drag.y)*0.9;}};
     c.onpointerup=c.onpointercancel=function(){RP.drag=null;};}
   return c;}
 function rpDraw3d(dt){
   var c=rpCanvas();if(!c)return;var g=c.getContext("2d"),W=c.width,H=c.height,dpr=window.devicePixelRatio||1,now=performance.now();
   g.clearRect(0,0,W,H);
-  var p=plan(),n0=p.pts.length-1,bal=rpAt(RP.t),acc=planAccounts().filter(function(x){return x.current>0;});
+  var p=plan(),n0=p.pts.length-1,i0=p.pts[0].i,bal=rpAt(RP.t),acc=planAccounts().filter(function(x){return x.current>0;});
   var start=p.pts[0].total||1,tot=0;acc.forEach(function(x){tot+=Math.max(0,bal[x.name]);});
-  var frac=tot/start;
-  /* starfield streaming past: slow drift, faster while the months run */
-  if(!RP.stars){RP.stars=[];for(var i=0;i<160;i++)RP.stars.push({x:(Math.random()-0.5)*2,y:(Math.random()-0.5)*2,z:Math.random()*3+0.2});}
-  var vz=(RP.playing?0.55:0.12)*dt/1000,cx=W/2,cy=H*0.5,F=W*0.75;
-  RP.stars.forEach(function(s){s.z-=vz;if(s.z<0.15){s.z=3.2;s.x=(Math.random()-0.5)*2;s.y=(Math.random()-0.5)*2;}
-    var k=F/s.z,x=cx+s.x*k,y=cy+s.y*k,k2=F/(s.z+vz*6),x2=cx+s.x*k2,y2=cy+s.y*k2,a=Math.min(1,(3.2-s.z)/2.2)*0.8;
-    if(x<0||x>W||y<0||y>H)return;
-    g.strokeStyle="rgba(255,255,255,"+a.toFixed(2)+")";g.lineWidth=Math.max(0.8,1.6/s.z)*dpr;g.beginPath();g.moveTo(x2,y2);g.lineTo(x,y);g.stroke();});
-  /* the sphere */
-  var Rs=(0.42+0.58*Math.pow(frac,0.6))*Math.min(W,H)*0.36,
-      ry=RP.spin,rx=(RP.tilt||0)+0.35+0.15*Math.sin(now/4300),rz=0.22*Math.sin(now/6100);
-  var cy1=Math.cos(ry),sy1=Math.sin(ry),cx1=Math.cos(rx),sx1=Math.sin(rx),cz1=Math.cos(rz),sz1=Math.sin(rz);
-  function R3(v){var x=v[0],y=v[1],z=v[2];var x1=x*cy1+z*sy1,z1=-x*sy1+z*cy1;var y2=y*cx1-z1*sx1,z2=y*sx1+z1*cx1;var x3=x1*cz1-y2*sz1,y3=x1*sz1+y2*cz1;return [x3,y3,z2];}
-  function Pj(v){var d=3.0,s=d/(d-v[2]);return {x:cx+v[0]*Rs*s,y:cy+v[1]*Rs*s,z:v[2],s:s};}
-  /* atmosphere */
-  var atm=g.createRadialGradient(cx,cy,Rs*0.6,cx,cy,Rs*1.5);atm.addColorStop(0,"rgba(62,106,225,.20)");atm.addColorStop(0.6,"rgba(62,106,225,.05)");atm.addColorStop(1,"rgba(0,0,0,0)");
-  g.fillStyle=atm;g.beginPath();g.arc(cx,cy,Rs*1.5,0,Math.PI*2);g.fill();
-  /* wireframe: latitude rings and meridians, drawn with depth */
+  var frac=tot/start,done=tot<=0.5;
+  /* camera: forward position in months, a gentle sway, and where you're looking */
+  if(!RP.drag){RP.look.x*=0.95;RP.look.y*=0.95;}
+  var F=W*0.62,L=1.0,zc=RP.t*L,
+      vx=W/2+Math.sin(now/2600)*W*0.06+RP.look.x*dpr,vy=H*0.5+Math.cos(now/3300)*H*0.05+RP.look.y*dpr;
+  var Rt=Math.min(W,H)*0.62;
+  function twist(z){return z*0.35+now/9000;}
+  function Pj(ang,z){var d=z-zc;if(d<0.05)return null;var s=F/(F/Rt*0.0+d*Rt*0.0+d);s=1/(d);var r=Rt*Math.min(6,s);
+    var a=ang+twist(z);return {x:vx+Math.cos(a)*r,y:vy+Math.sin(a)*r,d:d,r:r};}
+  /* light at the end */
+  var glow=0.25+0.75*(1-frac),gl=g.createRadialGradient(vx,vy,0,vx,vy,Rt*(0.9+0.6*glow));
+  gl.addColorStop(0,"rgba(255,255,255,"+(0.9*glow).toFixed(2)+")");gl.addColorStop(0.18,"rgba(120,160,255,"+(0.45*glow).toFixed(2)+")");gl.addColorStop(0.55,"rgba(62,106,225,"+(0.10*glow).toFixed(2)+")");gl.addColorStop(1,"rgba(0,0,0,0)");
+  g.fillStyle=gl;g.fillRect(0,0,W,H);
+  /* rings: one per month, from far to near */
+  var SPOKES=18,far=zc+12,near=zc+0.06;
   g.lineWidth=dpr;
-  function ring(pts){for(var i=0;i<pts.length;i++){var a=Pj(pts[i]),b=Pj(pts[(i+1)%pts.length]),zz=(a.z+b.z)/2;
-    g.strokeStyle="rgba(255,255,255,"+(0.04+0.16*(zz+1)/2).toFixed(3)+")";g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();}}
-  var SEG=40;
-  for(var la=1;la<8;la++){var ph=la/8*Math.PI,r=Math.sin(ph),yy=Math.cos(ph),pts=[];
-    for(var i=0;i<SEG;i++){var th=i/SEG*Math.PI*2;pts.push(R3([r*Math.cos(th),yy,r*Math.sin(th)]));}ring(pts);}
-  for(var lo=0;lo<12;lo++){var th2=lo/12*Math.PI,pts2=[];
-    for(var j=0;j<SEG;j++){var ph2=j/SEG*Math.PI*2;pts2.push(R3([Math.sin(ph2)*Math.cos(th2),Math.cos(ph2),Math.sin(ph2)*Math.sin(th2)]));}ring(pts2);}
-  /* limb */
-  g.strokeStyle="rgba(255,255,255,.28)";g.lineWidth=1.2*dpr;g.beginPath();g.arc(cx,cy,Rs,0,Math.PI*2);g.stroke();
-  /* accounts as points on the surface (fibonacci spread) */
-  var colr={CARD:[227,25,55],LOAN:[62,106,225],BNPL:[245,158,11]},n=acc.length,ga=Math.PI*(3-Math.sqrt(5));
+  var zs=[];for(var z=Math.ceil(zc/L)*L;z<far;z+=L)zs.push(z);zs.reverse();
+  zs.forEach(function(z){var m=Math.round(z/L),isNow=m===Math.floor(RP.t)+1,q0=Pj(0,z);if(!q0)return;
+    var a=Math.max(0,Math.min(1,1-q0.d/12))*(isNow?0.75:0.35);
+    g.strokeStyle=isNow?"rgba(255,255,255,"+a.toFixed(2)+")":"rgba(120,160,255,"+a.toFixed(2)+")";g.lineWidth=(isNow?1.6:1)*dpr;
+    g.beginPath();g.arc(vx,vy,q0.r,0,Math.PI*2);g.stroke();
+    if(m<=n0&&q0.d<8&&q0.d>0.5){var lab=Pj(-Math.PI/2,z);g.fillStyle="rgba(255,255,255,"+(a*0.9).toFixed(2)+")";g.font=(8.5*dpr)+"px ui-monospace,Menlo,monospace";g.textAlign="center";g.fillText(keyFromMi(i0+m),lab.x,lab.y-5*dpr);}
+  });
+  /* twisting spokes along the wall */
+  for(var s=0;s<SPOKES;s++){var ang=s/SPOKES*Math.PI*2;g.beginPath();var first=true;
+    for(var z2=near+0.05;z2<far;z2+=0.25){var q=Pj(ang,z2);if(!q)continue;if(first){g.moveTo(q.x,q.y);first=false;}else g.lineTo(q.x,q.y);}
+    var sg=g.createRadialGradient(vx,vy,0,vx,vy,Rt*1.6);sg.addColorStop(0,"rgba(120,160,255,.02)");sg.addColorStop(0.5,"rgba(120,160,255,.12)");sg.addColorStop(1,"rgba(120,160,255,.28)");
+    g.strokeStyle=sg;g.lineWidth=dpr;g.stroke();}
+  /* accounts on the wall at the month they die */
+  var colr={CARD:[227,25,55],LOAN:[62,106,225],BNPL:[245,158,11]};
   var live=acc.filter(function(x){return bal[x.name]>0.5;}).map(function(x){return {ref:x,current:bal[x.name],apr:x.apr,kind:x.kind,limit:x.limit};}).sort(rank);
   var target=live.length?live[0].ref:null;
-  var nodes=acc.map(function(x,i){var y=1-(i+0.5)/n*2,r=Math.sqrt(1-y*y),t=ga*i;
-    var v=R3([Math.cos(t)*r,y,Math.sin(t)*r]),q=Pj(v),b=Math.max(0,bal[x.name]);
-    return {x:x,q:q,b:b,dead:b<=0.5,hot:x===target,r:(1.5+7*Math.sqrt(b/start))*dpr*q.s};});
-  nodes.sort(function(a,b){return a.q.z-b.q.z;});
-  nodes.forEach(function(k){var front=k.q.z>0,fa=front?1:0.28,rgb=k.dead?[34,197,94]:(colr[k.x.kind]||[255,255,255]);
-    if(k.dead){g.fillStyle="rgba(34,197,94,"+(0.9*fa).toFixed(2)+")";g.beginPath();g.arc(k.q.x,k.q.y,2.2*dpr,0,Math.PI*2);g.fill();return;}
-    if(k.hot&&front){var pr=k.r*(2.2+0.5*Math.sin(now/220)),hl=g.createRadialGradient(k.q.x,k.q.y,0,k.q.x,k.q.y,pr);
-      hl.addColorStop(0,"rgba(255,255,255,.55)");hl.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=hl;g.beginPath();g.arc(k.q.x,k.q.y,pr,0,Math.PI*2);g.fill();}
-    var nd=g.createRadialGradient(k.q.x-k.r*0.3,k.q.y-k.r*0.3,0,k.q.x,k.q.y,k.r);
-    nd.addColorStop(0,"rgba("+rgb.map(function(v){return Math.min(255,v+120);}).join(",")+","+fa+")");nd.addColorStop(1,"rgba("+rgb.join(",")+","+(0.85*fa).toFixed(2)+")");
-    g.fillStyle=nd;g.beginPath();g.arc(k.q.x,k.q.y,k.r,0,Math.PI*2);g.fill();
-    if(front&&(k.hot||k.r>5*dpr)){g.textAlign="left";g.fillStyle=k.hot?"#fff":"rgba(255,255,255,.7)";g.font=(k.hot?"700 ":"")+(9*dpr)+"px -apple-system,Helvetica,sans-serif";
-      g.fillText(k.x.name,k.q.x+k.r+4*dpr,k.q.y-1*dpr);g.fillStyle="rgba(255,255,255,.55)";g.font=(8*dpr)+"px ui-monospace,Menlo,monospace";g.fillText(money(k.b),k.q.x+k.r+4*dpr,k.q.y+9*dpr);}
+  var nodes=acc.map(function(x,i){var key=p.payoff[x.name],mIdx=n0;
+    for(var k=0;k<p.pts.length;k++)if(keyFromMi(p.pts[k].i)===key){mIdx=k;break;}
+    var z=mIdx*L,ang=(i*2.399)%(Math.PI*2),q=Pj(ang,z+0.001),b=Math.max(0,bal[x.name]);
+    return {x:x,q:q,z:z,b:b,dead:b<=0.5,hot:x===target,passed:RP.t>=mIdx-0.02};}).filter(function(k){return k.q&&k.q.d<11;});
+  nodes.sort(function(a,b){return b.q.d-a.q.d;});
+  nodes.forEach(function(k){var near1=Math.max(0,Math.min(1,1-k.q.d/11)),rgb=k.dead?[34,197,94]:(colr[k.x.kind]||[255,255,255]);
+    var rad=(2+9*Math.sqrt(k.x.current/start))*dpr*Math.min(2.2,1/Math.max(0.5,k.q.d))*(k.dead?0.5:1);
+    if(k.hot){var pr=rad*(2.4+0.5*Math.sin(now/200)),hl=g.createRadialGradient(k.q.x,k.q.y,0,k.q.x,k.q.y,pr);hl.addColorStop(0,"rgba(255,255,255,.5)");hl.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=hl;g.beginPath();g.arc(k.q.x,k.q.y,pr,0,Math.PI*2);g.fill();}
+    var nd=g.createRadialGradient(k.q.x-rad*0.3,k.q.y-rad*0.3,0,k.q.x,k.q.y,rad);
+    nd.addColorStop(0,"rgba("+rgb.map(function(v){return Math.min(255,v+110);}).join(",")+","+near1+")");nd.addColorStop(1,"rgba("+rgb.join(",")+","+(0.9*near1).toFixed(2)+")");
+    g.fillStyle=nd;g.beginPath();g.arc(k.q.x,k.q.y,rad,0,Math.PI*2);g.fill();
+    /* tether to the wall ring */
+    g.strokeStyle="rgba("+rgb.join(",")+","+(0.35*near1).toFixed(2)+")";g.lineWidth=dpr;g.beginPath();g.moveTo(k.q.x,k.q.y);g.lineTo(vx+(k.q.x-vx)*0.94,vy+(k.q.y-vy)*0.94);g.stroke();
+    if(k.q.d<5&&(k.hot||rad>4*dpr)){var side=k.q.x>vx?1:-1;g.textAlign=side>0?"left":"right";
+      g.fillStyle=k.hot?"#fff":"rgba(255,255,255,"+(0.75*near1).toFixed(2)+")";g.font=(k.hot?"700 ":"")+(9*dpr)+"px -apple-system,Helvetica,sans-serif";g.fillText(k.x.name,k.q.x+side*(rad+5*dpr),k.q.y-1*dpr);
+      g.fillStyle="rgba(255,255,255,"+(0.5*near1).toFixed(2)+")";g.font=(8*dpr)+"px ui-monospace,Menlo,monospace";g.fillText(k.dead?"paid":money(k.b),k.q.x+side*(rad+5*dpr),k.q.y+9*dpr);}
   });
+  /* vignette */
+  var vg=g.createRadialGradient(W/2,H/2,Math.min(W,H)*0.35,W/2,H/2,Math.max(W,H)*0.75);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(0,0,0,.75)");
+  g.fillStyle=vg;g.fillRect(0,0,W,H);
   /* month strip */
   var sx=W*0.08,sw=W*0.84,sy=H-12*dpr;
   g.strokeStyle="rgba(255,255,255,.15)";g.lineWidth=dpr;g.beginPath();g.moveTo(sx,sy);g.lineTo(sx+sw,sy);g.stroke();
-  for(var m=0;m<=n0;m++){var X=sx+m/n0*sw;g.fillStyle=m<=RP.t?"rgba(255,255,255,.9)":"rgba(255,255,255,.25)";g.fillRect(X-dpr,sy-3*dpr,2*dpr,6*dpr);}
+  for(var m2=0;m2<=n0;m2++){var X=sx+m2/n0*sw;g.fillStyle=m2<=RP.t?"rgba(255,255,255,.9)":"rgba(255,255,255,.25)";g.fillRect(X-dpr,sy-3*dpr,2*dpr,6*dpr);}
   g.fillStyle="#fff";g.beginPath();g.arc(sx+RP.t/n0*sw,sy,3.5*dpr,0,Math.PI*2);g.fill();
-  /* finale: the sphere collapses to a spark and a ring rolls out */
-  if(tot<=0.5){if(!RP.done){RP.done=true;RP.doneAt=now;}var age=(now-RP.doneAt)/1000;
-    var rr=Rs*1.2+age*W*0.35;g.strokeStyle="rgba(34,197,94,"+Math.max(0,0.6-age*0.25).toFixed(2)+")";g.lineWidth=2*dpr;g.beginPath();g.arc(cx,cy,rr,0,Math.PI*2);g.stroke();
-    var sp=g.createRadialGradient(cx,cy,0,cx,cy,Rs);sp.addColorStop(0,"rgba(255,255,255,.95)");sp.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=sp;g.beginPath();g.arc(cx,cy,Rs,0,Math.PI*2);g.fill();
-    g.textAlign="center";g.fillStyle="#fff";g.font="800 "+(28*dpr)+"px -apple-system,Helvetica,sans-serif";g.fillText("DEBT FREE",cx,cy-Rs-22*dpr);
-    g.fillStyle="rgba(255,255,255,.7)";g.font=(11*dpr)+"px -apple-system,Helvetica,sans-serif";g.fillText(keyFromMi(p.zeroIdx),cx,cy-Rs-6*dpr);}
+  /* arrival */
+  if(done){if(!RP.done){RP.done=true;RP.doneAt=now;}var age=Math.min(1,(now-RP.doneAt)/900);
+    var fl=g.createRadialGradient(vx,vy,0,vx,vy,Rt*1.4);fl.addColorStop(0,"rgba(255,255,255,"+(0.95*age).toFixed(2)+")");fl.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=fl;g.fillRect(0,0,W,H);
+    g.textAlign="center";g.fillStyle="rgba(0,0,0,"+age.toFixed(2)+")";g.font="800 "+(30*dpr)+"px -apple-system,Helvetica,sans-serif";g.fillText("DEBT FREE",vx,vy-6*dpr);
+    g.fillStyle="rgba(0,0,0,"+(0.7*age).toFixed(2)+")";g.font=(12*dpr)+"px -apple-system,Helvetica,sans-serif";g.fillText(keyFromMi(p.zeroIdx),vx,vy+14*dpr);}
   else RP.done=false;
 }
 /* ---------------- shell ---------------- */
 var TABS=[["today","Today","◉"],["plan","Plan","◈"],["accounts","Accounts","▤"]];
-var FOLDS={replay:false,wind:false,credit:false,spend:false,month:false,sync:false};
+var FOLDS={replay:true,wind:false,credit:false,spend:false,month:false,sync:false};
 function fold(id,title,sub,html){
   return '<details class="fold" data-fold="'+id+'"'+(FOLDS[id]?' open':'')+'><summary>'+title+(sub?'<small>'+sub+'</small>':'')+'</summary><div class="body">'+html+'</div></details>';
 }
 document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.fold){FOLDS[d.dataset.fold]=d.open;
-  if(d.dataset.fold==="replay"){if(d.open){RP.t=0;rpPlay();}else{RP.playing=false;if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}}}},true);
+  if(d.dataset.fold==="replay"){if(d.open){RP.t=0;rpPlay();}else rpStop();}}},true);
 function render(){
   bust();if(RP.raf){cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
   document.getElementById("nav").innerHTML=TABS.map(function(x){
@@ -1381,7 +1365,7 @@ function render(){
     viewAccounts()+fold("month","This month, day by day","every draft and paycheck",viewMonth())+
       fold("sync","Sharing and reset","",viewSync()))+'</div>';
   if(tab==="today")paintSpend();
-  if(tab==="plan"&&FOLDS.replay){rpPaint();if(RP.playing||RP.mode==="3d")RP.raf=requestAnimationFrame(rpFrame);}
+  if(tab==="plan"&&FOLDS.replay){rpPaint();if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -1396,9 +1380,7 @@ document.addEventListener("click",function(e){
   if(b.dataset.wind){windTest=b.dataset.wind;
     var wi=document.getElementById("windin");if(wi)wi.value=windTest;paintWind();return;}
   var act=b.dataset.act;
-  if(act==="rpplay"){if(RP.playing){rpStop();b.textContent="\u25B6 Play";}else rpPlay();return;}
-  if(act==="rpmode"){RP.mode=RP.mode==="3d"?"flat":"3d";var pl=RP.playing;render();if(pl)rpPlay();else if(RP.mode==="3d"&&!RP.raf)RP.raf=requestAnimationFrame(rpFrame);return;}
-  if(act==="rpspeed"){RP.perMonth=RP.perMonth<=350?700:300;b.textContent=RP.perMonth<=350?"Fast":"Normal";return;}
+  if(act==="rpspeed"){RP.perMonth=RP.perMonth<=450?900:400;b.textContent=RP.perMonth<=450?"Fast":"Normal";return;}
   if(act==="applywind"){
     var wp=windfallPlan(windTest);
     if(!wp.items.length){toast("Nothing to apply");return;}
