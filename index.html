@@ -131,11 +131,19 @@ details.fold>.body>.grid{gap:12px}
 <div id="toast"></div>
 <script>
 "use strict";
-var START_TOTAL=52253, CAR_TOTAL=75500, VAR_BUDGET=780;
+var START_TOTAL=52253, CAR_TOTAL=75500;
+/* Everyday spending is a flat $30 a day — groceries, gas, anything unplanned.
+   Each day after today reserves exactly $30, no more, no less. Whatever you
+   do not spend today is not spread onto tomorrow: it simply stays in the
+   balance, so "safe to spend" always tells the truth. */
+var VAR_DAILY=30;
+function daysInMonth(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate();}
+function monthBudget(){return VAR_DAILY*daysInMonth(new Date());}
+var VAR_BUDGET=VAR_DAILY*30;
 
 /* Everyday spending assumed per day in future months, once this month's
    budget no longer applies. */
-var VAR_MIN_RATE=VAR_BUDGET/30;
+var VAR_MIN_RATE=VAR_DAILY;
 
 var MONLBL=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 
@@ -439,7 +447,12 @@ function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(
 function spendThisMonth(){var k=monthKey(new Date());
   return (state.spend||[]).filter(function(e){return e.date.slice(0,7)===k;})
     .reduce(function(s,e){return s+Number(e.amount||0);},0);}
-function budgetLeft(){return VAR_BUDGET-spendThisMonth();}
+function budgetLeft(){return monthBudget()-spendThisMonth();}
+function spentToday(){var k=new Date(),key=k.getFullYear()+"-"+String(k.getMonth()+1).padStart(2,"0")+"-"+String(k.getDate()).padStart(2,"0");
+  return (state.spend||[]).filter(function(e){return e.date===key;}).reduce(function(s,e){return s+Number(e.amount||0);},0);}
+function todayLeft(){return VAR_DAILY-spentToday();}
+/* what you'd have spent by today at $30 a day, versus what you actually have */
+function paceDiff(){return VAR_DAILY*new Date().getDate()-spendThisMonth();}
 function daysLeftInMonth(){var d=new Date();
   return Math.max(1,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1);}
 
@@ -458,11 +471,8 @@ function workingBalance(){return (Number(state.cash.balance)||0)-loggedSinceRefr
    the working balance, so it is not reserved for a second time. */
 function daysAheadInMonth(){var d=new Date();
   return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate();}
-function currentDrip(){var n=daysAheadInMonth();
-  return n>0?Math.max(0,budgetLeft())/n:0;}
-function dripFor(d){var n=new Date();
-  if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth())return currentDrip();
-  return VAR_BUDGET/30;}
+function currentDrip(){return VAR_DAILY;}
+function dripFor(d){return VAR_DAILY;}
 
 /* The month's drafts, as they actually are now. A paid-off account no longer
    drafts, and an account with less left than its minimum only drafts what is
@@ -691,7 +701,7 @@ function viewNow(){
   var before=0;if(pi>-1)fc.slice(0,pi+1).forEach(function(d){
     before+=d.drip+d.items.filter(function(x){return x.amt<0;}).reduce(function(s,x){return s-x.amt;},0);});
   var stale=state.cash.updated&&(Date.now()-new Date(state.cash.updated).getTime())/864e5>3;
-  var overBudget=budgetLeft()<0;
+  var overBudget=false;
   var t=totals();
 
   var carried=0;
@@ -740,7 +750,7 @@ function viewNow(){
       (since>0?lineRow("Logged since you typed it",-since):"")+
       (inFlow>0?lineRow("Pay landing before then",inFlow):"")+
       lineRow("Bills that draft before then",-outFlow)+
-      lineRow("Everyday spending still to come · "+money(currentDrip())+"/day",-dripTot,true)+
+      lineRow("Everyday spending · $"+VAR_DAILY+" a day after today",-dripTot,true)+
       '<div style="display:flex;justify-content:space-between;gap:10px;padding:11px 0 0;margin-top:6px;border-top:1px solid var(--line2);font-size:13.5px;font-weight:800">'+
         '<span>Left on '+(tr.date?fmtDate(tr.date):"the thinnest day")+'</span>'+
         '<span class="num" style="color:'+(tr.bal<0?"var(--red)":"var(--green)")+'">'+signed(tr.bal)+'</span></div></div>'+
@@ -771,9 +781,8 @@ function viewNow(){
 
 /* ---------------- SPENDING ---------------- */
 function viewSpend(){
-  var spent=spendThisMonth(),left=budgetLeft(),over=left<0;
-  var pct=Math.max(0,Math.min(100,spent/VAR_BUDGET*100));
-  var perDay=Math.max(0,left)/daysLeftInMonth();
+  var spent=spendThisMonth(),left=todayLeft(),over=left<0,pace=paceDiff();
+  var pct=Math.max(0,Math.min(100,spentToday()/VAR_DAILY*100));
   var R=52,C=2*Math.PI*R,off=C*(1-pct/100);
   var k=monthKey(new Date());
   var mine=(state.spend||[]).filter(function(e){return e.date.slice(0,7)===k;})
@@ -795,11 +804,11 @@ function viewSpend(){
       '<text x="65" y="63" text-anchor="middle" font-size="21" font-weight="800" fill="#F4F4F4" font-family="var(--mono)">'+Math.round(pct)+'%</text>'+
       '<text x="65" y="80" text-anchor="middle" font-size="9" fill="#6E6E6E">used</text></svg>'+
     '<div style="flex:1;min-width:170px">'+
-      '<div class="eyebrow">Groceries, gas, everything unplanned</div>'+
+      '<div class="eyebrow">Today · $'+VAR_DAILY+' a day for groceries, gas, everything unplanned</div>'+
       '<div class="num big" style="margin:7px 0 4px;color:'+(over?"var(--red)":"var(--green)")+'">'+(over?"−"+money(left):money(left))+'</div>'+
-      '<div class="note">'+(over?"over":"left")+' of '+money(VAR_BUDGET)+' this month · '+money(spent)+' spent</div>'+
-      '<div class="note" style="margin-top:8px;color:var(--mut)">'+(over?"The pot is gone. Nothing further is reserved — anything else this month comes out of your cushion as you log it."
-        :"<b>"+money(currentDrip())+"/day</b> reserved for the "+daysAheadInMonth()+" days after today")+'</div></div></div>'+
+      '<div class="note">'+(over?"over today’s $"+VAR_DAILY:"left today")+' · '+money(spentToday())+' spent today · '+money(spent)+' this month</div>'+
+      '<div class="note" style="margin-top:8px;color:var(--mut)">'+(pace>=0?"<b style=\"color:var(--green)\">"+money(pace)+" under</b> pace for the month so far":"<b style=\"color:var(--red)\">"+money(-pace)+" over</b> pace for the month so far")+
+        ' · $'+VAR_DAILY+' is reserved for each of the '+daysAheadInMonth()+' days after today; what you don’t spend today stays in your balance.</div></div></div>'+
 
   '<div class="card pad"><div class="eyebrow">Log a purchase</div>'+
     '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap;align-items:center">'+
@@ -1347,7 +1356,7 @@ function render(){
   document.getElementById("sidecars").textContent=(c.done?"Cars "+keyFromMi(c.zeroIdx):"")+" · "+p.months+" mo left";
   var tg=targetAccount(),u=utilNow();
   document.getElementById("view").innerHTML = '<div class="grid">'+(
-    tab==="today"? viewReplay()+viewNow()+fold("spend","Spending",money(Math.max(0,budgetLeft()))+" left this month",viewSpend()) :
+    tab==="today"? viewReplay()+viewNow()+fold("spend","Spending",(todayLeft()<0?"−"+money(todayLeft())+" over today":money(todayLeft())+" left today"),viewSpend()) :
     tab==="plan"? viewDescent()+
       fold("wind","Extra cash came in",(Number(windTest)>0?money(windTest):"where to send it"),viewWind())+
 
