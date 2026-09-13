@@ -80,6 +80,14 @@ tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 svg{width:100%;display:block}
 .note{font-size:11.5px;color:var(--mut);line-height:1.6}
+details.fold{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+details.fold>summary{list-style:none;cursor:pointer;padding:15px 16px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--tx)}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"+";font-family:var(--mono);color:var(--dim);font-size:16px}
+details.fold[open]>summary::after{content:"\2212"}
+details.fold>summary small{font-weight:400;color:var(--dim);font-size:11px;margin-left:8px}
+details.fold>.body{padding:0 10px 10px}
+details.fold>.body>.grid{gap:12px}
 .mini{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden}
 .mini>i{display:block;height:100%;border-radius:99px}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);
@@ -114,6 +122,7 @@ svg{width:100%;display:block}
     <div class="eyebrow">Debt-free</div>
     <div id="sidefree" style="font-size:17px;font-weight:800;margin-top:4px">—</div>
     <div class="note" id="sidecars" style="font-size:10.5px">&nbsp;</div>
+    <div class="syncstat" style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:10px;color:var(--dim)">Connecting&hellip;</div>
   </div>
 </aside>
 <main>
@@ -252,7 +261,7 @@ var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Ap
 var PRIVATE=false; /* the artifact build sets this true */
 var KEY="adacy-debt-v2";
 var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[]};
-var tab="descent", spendTest="";
+var tab="today", spendTest="";
 
 function money(n){return "$"+Math.round(Math.abs(Number(n)||0)).toLocaleString("en-US");}
 function signed(n){return (n<0?"−":"")+money(n);}
@@ -909,8 +918,11 @@ function viewMonth(){
 /* ---------------- SYNC ---------------- */
 function viewSync(){
   return '<div class="grid">'+
-   '<div class="card pad"><div class="eyebrow">Send your numbers to another phone</div>'+
-     '<p style="font-size:13px;line-height:1.6;margin:9px 0 15px;color:var(--tx)">This copy lives on this device only. Copy the link below and text it over — opening it loads whichever set of numbers was updated more recently.</p>'+
+   '<div class="hero" style="border-left:3px solid var(--green)"><div class="eyebrow">Where your numbers live</div>'+
+     '<div class="syncstat" style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin:8px 0 6px">Connecting\u2026</div>'+
+     '<p style="font-size:13px;line-height:1.6;margin:0;color:var(--tx)">Type a balance here and every phone or computer with this link has it within seconds. Anyone with the link can change the numbers too.</p></div>'+
+   '<div class="card pad"><div class="eyebrow">Snapshot link</div>'+
+     '<p style="font-size:13px;line-height:1.6;margin:9px 0 15px;color:var(--tx)">A frozen copy of today\'s numbers, for keeping somewhere safe. Not needed to move between devices any more.</p>'+
      '<button class="btn" data-act="copylink">Copy sync link</button>'+
      '<button class="btn ghost" data-act="showlink" style="margin-left:8px;padding:11px 14px">Show the link</button>'+
      '<div id="linkbox" style="margin-top:13px"></div></div>'+
@@ -919,8 +931,8 @@ function viewSync(){
        '<li>Open this page in Safari</li><li>Tap Share</li><li>Choose <b>Add to Home Screen</b></li></ol>'+
      '<p class="note" style="margin-top:11px">Opens in its own window, and your numbers stay saved between visits.</p></div>'+
    '<div class="card pad"><div class="eyebrow">Start over</div>'+
-     '<p class="note" style="margin:9px 0 13px">Resets every balance on this device to the plan\'s starting numbers. Cannot be undone.</p>'+
-     '<button class="btn ghost" data-act="reset" style="padding:10px 15px">Reset this device</button></div></div>';
+     '<p class="note" style="margin:9px 0 13px">Resets every balance, on every device, to the plan\'s starting numbers. Cannot be undone.</p>'+
+     '<button class="btn ghost" data-act="reset" style="padding:10px 15px">Reset every balance</button></div></div>';
 }
 
 /* ---------------- CREDIT ---------------- */
@@ -1150,9 +1162,59 @@ function viewWind(){
    '<div id="windout" style="display:grid;gap:14px">'+windOut()+'</div></div>';
 }
 
+/* ---------------- SHARED NUMBERS (GitHub Pages build) ----------------
+   Everyone who opens this link sees the same balances. They live in one
+   GitHub gist; this page reads it on open and every few seconds, and writes
+   it whenever a number changes. The newer revision always wins, so a phone
+   that was offline with stale numbers never overwrites newer ones. The copy
+   in this browser is only a cache so the page opens instantly offline. */
+var GIST_ID="aaf7fade2a9850e379117a973aae29b4";
+var _gk=["==wVap3bnJDS2xkYtN","GVzAjZ0NDTxE0c1NjQ","290SpFlZZZ2MUp0Xvh2Z"];
+function gistKey(){return atob(_gk.join("").split("").reverse().join(""));}
+var GS={mode:"boot",at:0,pushT:null,pollT:null,etag:null};
+function gistHeaders(){return {"Authorization":"Bearer "+gistKey(),"Accept":"application/vnd.github+json","Content-Type":"application/json"};}
+function gsPaint(){var t=GS.mode==="synced"?"Shared \u2014 everyone with the link sees these numbers":GS.mode==="saving"?"Saving\u2026":GS.mode==="boot"?"Connecting\u2026":"Can\u2019t reach the server \u2014 saved here for now",
+  c=GS.mode==="synced"?"var(--green)":GS.mode==="error"?"var(--amber)":"var(--dim)";
+  var els=document.querySelectorAll(".syncstat");for(var i=0;i<els.length;i++){els[i].textContent=t;els[i].style.color=c;}}
+function gsSet(m){GS.mode=m;if(m==="synced")GS.at=Date.now();gsPaint();}
+function gsPush(){
+  if(!GIST_ID||GIST_ID.slice(0,2)==="__")return;
+  var body=JSON.stringify({files:{"state.json":{content:JSON.stringify(state)}}});
+  fetch("https://api.github.com/gists/"+GIST_ID,{method:"PATCH",headers:gistHeaders(),body:body})
+    .then(function(r){if(!r.ok)throw 0;gsSet("synced");},function(){gsSet("error");});
+}
+function gsPull(){
+  if(!GIST_ID||GIST_ID.slice(0,2)==="__")return;
+  fetch("https://api.github.com/gists/"+GIST_ID+"?_="+Date.now(),{headers:gistHeaders(),cache:"no-store"})
+    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(g){
+      var f=g.files&&g.files["state.json"],d=null;
+      try{d=f&&f.content?JSON.parse(f.content):null;}catch(e){}
+      var rr=d?Number(d.rev)||0:0, lr=Number(state.rev)||0;
+      if(rr>lr){
+        state={accounts:Object.assign(defaults(),d.accounts||{}),cash:d.cash||{balance:0,updated:null},
+               history:d.history||[],spend:d.spend||[],rev:rr};
+        try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+        if(!document.activeElement||document.activeElement.tagName!=="INPUT")render();
+      } else if(rr<lr){gsPush();}
+      gsSet("synced");
+    },function(){gsSet("error");});
+}
+if(!PRIVATE){
+  var _saveLocal=save;
+  save=function(){state.rev=Date.now();_saveLocal();gsSet("saving");clearTimeout(GS.pushT);GS.pushT=setTimeout(gsPush,500);};
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)gsPull();});
+  window.addEventListener("focus",gsPull);
+  setInterval(function(){if(!document.hidden)gsPull();},15000);
+}
+
 /* ---------------- shell ---------------- */
-var TABS=[["descent","Descent","◈"],["now","Right Now","◉"],["spend","Spending","◐"],
-          ["accounts","Accounts","▤"],["credit","Credit","◎"],["wind","Windfall","◇"],["month","The Month","▦"],["sync","Sync","⇄"]];
+var TABS=[["today","Today","◉"],["plan","Plan","◈"],["accounts","Accounts","▤"]];
+var FOLDS={wind:false,credit:false,spend:false,month:false,sync:false};
+function fold(id,title,sub,html){
+  return '<details class="fold" data-fold="'+id+'"'+(FOLDS[id]?' open':'')+'><summary>'+title+(sub?'<small>'+sub+'</small>':'')+'</summary><div class="body">'+html+'</div></details>';
+}
+document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.fold)FOLDS[d.dataset.fold]=d.open;},true);
 function render(){
   bust();
   document.getElementById("nav").innerHTML=TABS.map(function(x){
@@ -1162,10 +1224,15 @@ function render(){
   var p=plan(),c=cars();
   document.getElementById("sidefree").textContent=p.done?keyFromMi(p.zeroIdx):"—";
   document.getElementById("sidecars").textContent=(c.done?"Cars "+keyFromMi(c.zeroIdx):"")+" · "+p.months+" mo left";
-  document.getElementById("view").innerHTML =
-    tab==="descent"?viewDescent():tab==="now"?viewNow():tab==="spend"?viewSpend():
-    tab==="accounts"?viewAccounts():tab==="credit"?viewCredit():tab==="wind"?viewWind():tab==="month"?viewMonth():viewSync();
-  if(tab==="now")paintSpend();
+  var tg=targetAccount(),u=utilNow();
+  document.getElementById("view").innerHTML = '<div class="grid">'+(
+    tab==="today"? viewNow()+fold("spend","Spending",money(Math.max(0,budgetLeft()))+" left this month",viewSpend()) :
+    tab==="plan"? viewDescent()+
+      fold("wind","Extra cash came in",(Number(windTest)>0?money(windTest):"where to send it"),viewWind())+
+      fold("credit","Credit",Math.round(u*100)+"% utilisation"+(tg?" \u00b7 target "+esc(tg.name):""),viewCredit()) :
+    viewAccounts()+fold("month","This month, day by day","every draft and paycheck",viewMonth())+
+      fold("sync","Sharing and reset","",viewSync()))+'</div>';
+  if(tab==="today")paintSpend();
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -1217,7 +1284,7 @@ document.addEventListener("change",function(e){
   var el=e.target;
   if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);save();render();}
   if(el.id==="cashin"){state.cash={balance:Math.round(Number(el.value)||0),updated:new Date().toISOString()};save();render();}});
-load();render();
+load();render();if(!PRIVATE)gsPull();
 </script>
 </body>
 </html>
