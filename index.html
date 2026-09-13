@@ -704,11 +704,13 @@ function viewNow(){
   var overBudget=false;
   var t=totals();
 
-  var carried=0,carriedDays=0;
   var bills=fc.slice(0,HORIZON).map(function(d){
-    carried+=d.drip;carriedDays++;
-    if(!d.items.length)return "";
-    var neg=d.bal<0, dripShown=carried, dripDays=carriedDays; carried=0;carriedDays=0;
+    var neg=d.bal<0, dripShown=d.drip, dripDays=1;
+    if(!d.items.length)return '<div style="display:flex;gap:11px;padding:6px 16px;border-bottom:1px solid var(--line);align-items:center;'+(neg?'background:rgba(255,94,108,.07)':'')+'">'+
+     '<div style="width:74px;flex-shrink:0;font-size:11px;color:'+(neg?"var(--red)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
+     '<div style="flex:1;font-size:11.5px;color:var(--dim);font-style:italic">Everyday spending</div>'+
+     '<div class="num" style="font-size:11.5px;color:var(--dim);font-style:italic">\u2212$'+VAR_DAILY+'</div>'+
+     '<div class="num" style="width:70px;text-align:right;font-size:12px;color:'+(neg?"var(--red)":"var(--mut)")+'">'+(neg?"\u2212":"")+money(d.bal)+'</div></div>';
     return '<div style="display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);align-items:flex-start;'+(neg?'background:rgba(255,94,108,.07)':'')+'">'+
      '<div style="width:74px;flex-shrink:0;font-size:11px;font-weight:700;color:'+(neg?"var(--red)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
      '<div style="flex:1;min-width:0">'+d.items.map(function(it){
@@ -716,10 +718,10 @@ function viewNow(){
         '<span style="'+(it.amt>0?"font-weight:700;color:var(--green)":"color:var(--tx)")+'">'+esc(it.name)+'</span>'+
         '<span class="num" style="white-space:nowrap;color:'+(it.amt>0?"var(--green)":"var(--mut)")+'">'+(it.amt>0?"+":"−")+money(it.amt)+'</span></div>';}).join("")+
        (dripShown>=0.5?'<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:1px 0;font-style:italic">'+
-        '<span style="color:var(--dim)">Everyday spending \u00b7 '+(dripDays>1?dripDays+' days \u00d7 $'+VAR_DAILY:'$'+VAR_DAILY)+'</span>'+
+        '<span style="color:var(--dim)">Everyday spending</span>'+
         '<span class="num" style="white-space:nowrap;color:var(--dim)">−'+money(dripShown)+'</span></div>':"")+'</div>'+
      '<div class="num" style="width:86px;flex-shrink:0;text-align:right;font-size:13px;font-weight:700;color:'+(neg?"var(--red)":"var(--tx)")+'">'+signed(d.bal)+'</div></div>';})
-    .filter(function(x){return x;}).slice(0,40).join("");
+    .filter(function(x){return x;}).join("");
 
   return '<div class="grid">'+
   '<div class="card pad">'+
@@ -775,7 +777,7 @@ function viewNow(){
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
     '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next two months</div>'+
-    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Everyday spending still to come is '+money(currentDrip())+'/day, shown on each row. What you\'ve already logged came off the balance above.</div></div>'+
+    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div></div>'+
     bills+'</div></div>';
 }
 
