@@ -471,8 +471,14 @@ function workingBalance(){return (Number(state.cash.balance)||0)-loggedSinceRefr
    the working balance, so it is not reserved for a second time. */
 function daysAheadInMonth(){var d=new Date();
   return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate();}
-function currentDrip(){return VAR_DAILY;}
-function dripFor(d){return VAR_DAILY;}
+/* If you have overspent the $30 a day so far this month, the overage is
+   clawed back evenly from the days left in the month, so the month still
+   comes in at $30 a day. Underspending never raises a later day. */
+function catchUpPerDay(){var over=Math.max(0,-paceDiff()),n=daysAheadInMonth();return n>0?over/n:0;}
+function currentDrip(){return Math.max(0,VAR_DAILY-catchUpPerDay());}
+function dripFor(d){var n=new Date();
+  if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth())return currentDrip();
+  return VAR_DAILY;}
 
 /* The month's drafts, as they actually are now. A paid-off account no longer
    drafts, and an account with less left than its minimum only drafts what is
@@ -708,8 +714,8 @@ function viewNow(){
     var neg=d.bal<0, dripShown=d.drip, dripDays=1;
     if(!d.items.length)return '<div style="display:flex;gap:11px;padding:6px 16px;border-bottom:1px solid var(--line);align-items:center;'+(neg?'background:rgba(255,94,108,.07)':'')+'">'+
      '<div style="width:74px;flex-shrink:0;font-size:11px;color:'+(neg?"var(--red)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
-     '<div style="flex:1;font-size:11.5px;color:var(--dim);font-style:italic">Everyday spending</div>'+
-     '<div class="num" style="font-size:11.5px;color:var(--dim);font-style:italic">\u2212$'+VAR_DAILY+'</div>'+
+     '<div style="flex:1;font-size:11.5px;color:var(--dim);font-style:italic">Everyday spending'+(d.drip<VAR_DAILY-0.5?' \u00b7 $'+VAR_DAILY+' less catch-up':'')+'</div>'+
+     '<div class="num" style="font-size:11.5px;color:var(--dim);font-style:italic">\u2212'+money(d.drip)+'</div>'+
      '<div class="num" style="width:70px;text-align:right;font-size:12px;color:'+(neg?"var(--red)":"var(--mut)")+'">'+(neg?"\u2212":"")+money(d.bal)+'</div></div>';
     return '<div style="display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);align-items:flex-start;'+(neg?'background:rgba(255,94,108,.07)':'')+'">'+
      '<div style="width:74px;flex-shrink:0;font-size:11px;font-weight:700;color:'+(neg?"var(--red)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
@@ -718,7 +724,7 @@ function viewNow(){
         '<span style="'+(it.amt>0?"font-weight:700;color:var(--green)":"color:var(--tx)")+'">'+esc(it.name)+'</span>'+
         '<span class="num" style="white-space:nowrap;color:'+(it.amt>0?"var(--green)":"var(--mut)")+'">'+(it.amt>0?"+":"−")+money(it.amt)+'</span></div>';}).join("")+
        (dripShown>=0.5?'<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:1px 0;font-style:italic">'+
-        '<span style="color:var(--dim)">Everyday spending</span>'+
+        '<span style="color:var(--dim)">Everyday spending'+(dripShown<VAR_DAILY-0.5?' \u00b7 $'+VAR_DAILY+' less catch-up':'')+'</span>'+
         '<span class="num" style="white-space:nowrap;color:var(--dim)">−'+money(dripShown)+'</span></div>':"")+'</div>'+
      '<div class="num" style="width:86px;flex-shrink:0;text-align:right;font-size:13px;font-weight:700;color:'+(neg?"var(--red)":"var(--tx)")+'">'+signed(d.bal)+'</div></div>';})
     .filter(function(x){return x;}).join("");
@@ -810,7 +816,8 @@ function viewSpend(){
       '<div class="num big" style="margin:7px 0 4px;color:'+(over?"var(--red)":"var(--green)")+'">'+(over?"−"+money(left):money(left))+'</div>'+
       '<div class="note">'+(over?"over today’s $"+VAR_DAILY:"left today")+' · '+money(spentToday())+' spent today · '+money(spent)+' this month</div>'+
       '<div class="note" style="margin-top:8px;color:var(--mut)">'+(pace>=0?"<b style=\"color:var(--green)\">"+money(pace)+" under</b> pace for the month so far":"<b style=\"color:var(--red)\">"+money(-pace)+" over</b> pace for the month so far")+
-        ' · $'+VAR_DAILY+' is reserved for each of the '+daysAheadInMonth()+' days after today; what you don’t spend today stays in your balance.</div></div></div>'+
+        (pace>=0?' · $'+VAR_DAILY+' is reserved for each of the '+daysAheadInMonth()+' days after today; what you don’t spend today stays in your balance.'
+                :' · to get the month back to $'+VAR_DAILY+' a day, the '+daysAheadInMonth()+' days after today are <b>'+money(currentDrip())+' each</b>.')+'</div></div></div>'+
 
   '<div class="card pad"><div class="eyebrow">Log a purchase</div>'+
     '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap;align-items:center">'+
