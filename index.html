@@ -1272,7 +1272,7 @@ function rpDraw3d(dt){
   g.clearRect(0,0,W,H);
   var p=plan(),n0=p.pts.length-1,start=p.pts[0].total||1,t=RP.t,k=Math.min(Math.floor(t),n0),fr=t-k;
   var th=0,cs=1,sn=0,tilt=-0.26,ct=Math.cos(tilt),st=Math.sin(tilt); /* straight on, looking slightly down onto the floor */
-  var f=W*1.25,dist=3.6,cy=H*0.8,SX=2.15,SY=1.2,SZ=0.5,CX=W*0.6;
+  var f=W*1.25,dist=3.6,cy=H*0.8,SX=2.05,SY=1.2,SZ=0.5,CX=W*0.59;
   function P(x,y,z){var rx=x*cs-z*sn,rz=x*sn+z*cs;var y2=y*ct-rz*st,z2=rz*ct+y*st;var s=f/(z2+dist);return {x:CX+rx*s,y:cy-y2*s,z:z2,s:s};}
   function X(m){return -SX/2+m/n0*SX;}function Y(v){return v/start*SY;}
   function tv(m){return p.pts[Math.min(m,n0)].total;}
