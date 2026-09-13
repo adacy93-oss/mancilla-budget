@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Descent">
-<meta name="theme-color" content="#0A0B12">
+<meta name="apple-mobile-web-app-title" content="Mancilla Budget">
+<meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex, nofollow">
-<title>Descent</title>
+<title>Mancilla Budget</title>
 <style>
 :root{
-  --bg:#0A0B12; --panel:#14161F; --panel2:#1B1E2A; --line:rgba(255,255,255,.07);
-  --line2:rgba(255,255,255,.13);
-  --tx:#E9EBF3; --mut:#868DA6; --dim:#5C6379;
-  --violet:#7C5CFF; --cyan:#35D6C4; --green:#34D399; --red:#FF5E6C; --amber:#FBBF24; --blue:#4C8DFF;
+  --bg:#000000; --panel:#111111; --panel2:#1A1A1A; --line:rgba(255,255,255,.09);
+  --line2:rgba(255,255,255,.18);
+  --tx:#F4F4F4; --mut:#A6A6A6; --dim:#6E6E6E;
+  --violet:#3E6AE1; --cyan:#FFFFFF; --green:#22C55E; --red:#E31937; --amber:#F59E0B; --blue:#3E6AE1;
   --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Helvetica,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,monospace;
 }
@@ -23,52 +23,48 @@ html,body{margin:0;padding:0;background:var(--bg)}
 body{color:var(--tx);font-family:var(--sans);-webkit-text-size-adjust:100%;
   padding-bottom:calc(40px + env(safe-area-inset-bottom));overflow-x:hidden}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.eyebrow{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:700}
+.eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
 .shell{display:flex;min-height:100vh}
 
 /* sidebar */
 aside{width:212px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
   padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:10px;padding:0 8px 20px}
-.mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--cyan));
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#0A0B12;flex-shrink:0}
+.mark{width:30px;height:30px;border-radius:4px;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#000000;flex-shrink:0}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.01em}
 .brand span{display:block;font-size:10px;color:var(--dim);font-weight:500}
 aside button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
-  color:var(--mut);font:600 13px var(--sans);padding:10px 12px;border-radius:9px;cursor:pointer;
+  color:var(--mut);font:600 13px var(--sans);padding:10px 12px;border-radius:6px;cursor:pointer;
   margin-bottom:2px;text-align:left;transition:background .15s,color .15s}
 aside button:hover{background:var(--panel2);color:var(--tx)}
-aside button[data-on="true"]{background:linear-gradient(90deg,rgba(124,92,255,.22),rgba(124,92,255,.04));
+aside button[data-on="true"]{background:rgba(255,255,255,.08);
   color:#fff}
 aside button[data-on="true"] .dot{background:var(--violet)}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0}
-.sidefoot{margin-top:18px;padding:14px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.sidefoot{margin-top:18px;padding:14px 12px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
 
 main{flex:1;min-width:0;padding:26px 26px 60px}
 .mtabs{display:none}
 
-.hero{background:
-   radial-gradient(120% 140% at 100% 0%,rgba(124,92,255,.20),transparent 55%),
-   radial-gradient(100% 120% at 0% 100%,rgba(53,214,196,.13),transparent 55%),
-   var(--panel);
-  border:1px solid var(--line);border-radius:18px;padding:22px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px}
 .pad{padding:18px}
 .grid{display:grid;gap:16px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:15px}
 .chip{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
   font-size:13px;margin-bottom:9px}
 .big{font-size:31px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px}
 input,textarea{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);
-  padding:9px 11px;border-radius:9px;font-size:16px;font-family:var(--mono);text-align:right;width:112px}
+  padding:9px 11px;border-radius:6px;font-size:16px;font-family:var(--mono);text-align:right;width:112px}
 input::placeholder{color:var(--dim)}
 input:focus,button:focus-visible{outline:2px solid var(--violet);outline-offset:1px}
-.btn{background:var(--violet);color:#fff;border:0;padding:11px 17px;border-radius:9px;
+.btn{background:var(--violet);color:#fff;border:0;padding:12px 18px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;
   font:700 12px var(--sans);cursor:pointer}
 .btn:hover{filter:brightness(1.12)}
-.btn.ghost{background:var(--panel2);color:var(--mut);border:1px solid var(--line2);padding:7px 12px;font-size:11px}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--line2);padding:7px 12px;font-size:11px}
 .btn.ghost:hover{color:var(--tx)}
 table{width:100%;border-collapse:collapse}
 th{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;
@@ -80,7 +76,7 @@ tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 svg{width:100%;display:block}
 .note{font-size:11.5px;color:var(--mut);line-height:1.6}
-details.fold{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+details.fold{background:var(--panel);border:1px solid var(--line);border-radius:6px}
 details.fold>summary{list-style:none;cursor:pointer;padding:15px 16px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--tx)}
 details.fold>summary::-webkit-details-marker{display:none}
 details.fold>summary::after{content:"+";font-family:var(--mono);color:var(--dim);font-size:16px}
@@ -92,7 +88,7 @@ details.fold>.body>.grid{gap:12px}
 .mini>i{display:block;height:100%;border-radius:99px}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);
   background:var(--panel2);border:1px solid var(--line2);color:var(--tx);padding:12px 18px;
-  border-radius:11px;font-size:13px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
+  border-radius:6px;font-size:13px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
 #toast.on{transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (max-width:860px){
@@ -105,7 +101,7 @@ details.fold>.body>.grid{gap:12px}
   .mtabs .row::-webkit-scrollbar{display:none}
   .mtabs button{background:var(--panel);border:1px solid var(--line);color:var(--mut);
     font:700 11.5px var(--sans);padding:8px 14px;border-radius:99px;white-space:nowrap;cursor:pointer}
-  .mtabs button[data-on="true"]{background:var(--violet);border-color:var(--violet);color:#fff}
+  .mtabs button[data-on="true"]{background:#fff;border-color:#fff;color:#000}
   .big{font-size:27px}
 }
 </style>
@@ -545,18 +541,18 @@ function viewDescent(){
 
   var grid="";[0,.25,.5,.75,1].forEach(function(f){var v=maxY*f;
     grid+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+yv(v)+'" y2="'+yv(v)+'" stroke="rgba(255,255,255,.06)"/>'+
-     '<text x="'+(PL-8)+'" y="'+(yv(v)+4)+'" text-anchor="end" font-size="10" fill="#5C6379" font-family="var(--mono)">'+(v?Math.round(v/1000)+"k":"0")+'</text>';});
+     '<text x="'+(PL-8)+'" y="'+(yv(v)+4)+'" text-anchor="end" font-size="10" fill="#6E6E6E" font-family="var(--mono)">'+(v?Math.round(v/1000)+"k":"0")+'</text>';});
   var step=lastI>24?4:3,xlab="";
   for(var i=0;i<=lastI;i+=step){
-    xlab+='<text x="'+xv(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(i)+'</text>';}
+    xlab+='<text x="'+xv(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(i)+'</text>';}
   if((lastI%step)!==0)
-    xlab+='<text x="'+xv(lastI)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(lastI)+'</text>';
+    xlab+='<text x="'+xv(lastI)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(lastI)+'</text>';
 
   var dots="",dp=[];
   state.history.forEach(function(h){
     var d=new Date(h.date+"T00:00:00"),i=mi(d);
     if(i>=0&&i<=lastI){var X=xv(i),Y=yv(Math.min(h.total,maxY));dp.push((dp.length?"L":"M")+X+","+Y);
-      dots+='<circle cx="'+X+'" cy="'+Y+'" r="4.5" fill="var(--amber)" stroke="#0A0B12" stroke-width="2"/>';}});
+      dots+='<circle cx="'+X+'" cy="'+Y+'" r="4.5" fill="var(--amber)" stroke="#000000" stroke-width="2"/>';}});
   var dline=dp.length>1?'<path d="'+dp.join(" ")+'" fill="none" stroke="var(--amber)" stroke-width="2" stroke-dasharray="4 3"/>':"";
 
   /* where the original plan said you would be this month, vs where you are */
@@ -570,14 +566,14 @@ function viewDescent(){
   var gg="",gr="";
   for(var g=0;g<=lastI;g+=step){
     gg+='<line x1="'+gx(g)+'" x2="'+gx(g)+'" y1="16" y2="'+(GH-20)+'" stroke="rgba(255,255,255,.06)"/>'+
-      '<text x="'+gx(g)+'" y="10" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(g)+'</text>';}
+      '<text x="'+gx(g)+'" y="10" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(g)+'</text>';}
   var ni=nowIdx();
   gg+='<line x1="'+gx(ni)+'" x2="'+gx(ni)+'" y1="16" y2="'+(GH-20)+'" stroke="rgba(124,92,255,.55)" stroke-dasharray="3 3"/>';
   rows.forEach(function(x,r){var y=22+r*RH,done=x.current<=0;
-    gr+='<text x="'+(GPL-8)+'" y="'+(y+8)+'" text-anchor="end" font-size="9" fill="'+(done?"#5C6379":"#B9BFD2")+'" font-weight="600"'+(done?' text-decoration="line-through"':'')+'>'+esc(x.name)+'</text>'+
+    gr+='<text x="'+(GPL-8)+'" y="'+(y+8)+'" text-anchor="end" font-size="9" fill="'+(done?"#6E6E6E":"#B9BFD2")+'" font-weight="600"'+(done?' text-decoration="line-through"':'')+'>'+esc(x.name)+'</text>'+
       '<rect x="'+gx(0)+'" y="'+y+'" width="'+Math.max(3,gx(x.i)-gx(0))+'" height="8" rx="4" fill="'+(done?"#2A2E3D":KINDCOL[x.kind])+'" opacity="'+(done?1:.8)+'"/>'+
       '<circle cx="'+gx(x.i)+'" cy="'+(y+4)+'" r="3" fill="var(--green)"/>'+
-      '<text x="'+(gx(x.i)+7)+'" y="'+(y+7.5)+'" font-size="8" fill="#5C6379" font-family="var(--mono)">'+(done?"PAID":x.gone)+'</text>';});
+      '<text x="'+(gx(x.i)+7)+'" y="'+(y+7.5)+'" font-size="8" fill="#6E6E6E" font-family="var(--mono)">'+(done?"PAID":x.gone)+'</text>';});
 
   var tg=targetAccount(), carB=carAccounts().reduce(function(s,x){return s+Math.max(0,x.current);},0);
   var amt=tg?Math.min(extraThisMonth(),Math.max(0,Math.round(tg.current-tg.min))):0;
@@ -599,23 +595,23 @@ function viewDescent(){
   '<div class="card" style="padding:18px 14px 8px">'+
     '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 5px 10px;flex-wrap:wrap;gap:6px">'+
       '<div class="eyebrow">Balance to zero · '+monthsLeft+' months left</div>'+
-      '<div style="font-size:10px;color:var(--dim)"><span style="color:var(--cyan)">━</span> from today’s numbers &nbsp; <span style="color:#4A5068">┈</span> original plan &nbsp; <span style="color:var(--amber)">●</span> recorded</div></div>'+
+      '<div style="font-size:10px;color:var(--dim)"><span style="color:var(--cyan)">━</span> from today’s numbers &nbsp; <span style="color:#3A3A3A">┈</span> original plan &nbsp; <span style="color:var(--amber)">●</span> recorded</div></div>'+
     '<svg viewBox="0 0 '+W+' '+H+'">'+
       '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">'+
-        '<stop offset="0%" stop-color="#7C5CFF"/><stop offset="100%" stop-color="#35D6C4"/></linearGradient>'+
+        '<stop offset="0%" stop-color="#3E6AE1"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient>'+
         '<linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">'+
-        '<stop offset="0%" stop-color="#7C5CFF" stop-opacity=".30"/><stop offset="100%" stop-color="#35D6C4" stop-opacity="0"/></linearGradient></defs>'+
+        '<stop offset="0%" stop-color="#3E6AE1" stop-opacity=".30"/><stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>'+
       grid+
-      '<path d="'+bline+'" fill="none" stroke="#4A5068" stroke-width="1.6" stroke-dasharray="5 4"/>'+
+      '<path d="'+bline+'" fill="none" stroke="#3A3A3A" stroke-width="1.6" stroke-dasharray="5 4"/>'+
       '<path d="'+line+' L'+xv(p.pts[p.pts.length-1].i)+','+yv(0)+' L'+xv(p.pts[0].i)+','+yv(0)+' Z" fill="url(#ar)"/>'+
       '<path d="'+line+'" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round"/>'+
       dline+dots+xlab+'</svg></div>'+
 
   '<div class="tiles">'+
-    tile("◇","#7C5CFF","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
-    tile("✓","#34D399","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
-    tile("↺","#4C8DFF","Minimums due",money(t.min),"every month, non-auto")+
-    tile("↑","#FBBF24","Extra payment",money(extraThisMonth()),thisMonthKey()+
+    tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
+    tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
+    tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
+    tile("↑","#F59E0B","Extra payment",money(extraThisMonth()),thisMonthKey()+
       (new Date()<DIS_START?" · "+money(EXTRA_BASE+DIS_TO_DEBT)+" from "+MONLBL[DIS_START.getMonth()]
        :" · incl. "+money(DIS_TO_DEBT)+" of the benefit"))+
   '</div>'+
@@ -760,9 +756,9 @@ function viewNow(){
     '<div id="spendout"></div></div>'+
 
   '<div class="tiles">'+
-    tile("◉","#7C5CFF","Need today",money(need),short>0?money(short)+" more than you have":money(cushion)+" of cushion")+
-    tile("→","#4C8DFF","Before next payday",money(before),pi>-1?"lands "+fmtDate(fc[pi].date):"none in range")+
-    tile("▽","#FF5E6C","Thinnest day",tr.date?fmtDate(tr.date):"—","hits "+signed(tr.bal),tr.bal<0?"var(--red)":"var(--tx)")+
+    tile("◉","#3E6AE1","Need today",money(need),short>0?money(short)+" more than you have":money(cushion)+" of cushion")+
+    tile("→","#3E6AE1","Before next payday",money(before),pi>-1?"lands "+fmtDate(fc[pi].date):"none in range")+
+    tile("▽","#E31937","Thinnest day",tr.date?fmtDate(tr.date):"—","hits "+signed(tr.bal),tr.bal<0?"var(--red)":"var(--tx)")+
   '</div>'+
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
@@ -791,11 +787,11 @@ function viewSpend(){
   return '<div class="grid">'+
   '<div class="hero" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">'+
     '<svg viewBox="0 0 130 130" style="width:130px;flex-shrink:0">'+
-      '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="#1B1E2A" stroke-width="13"/>'+
+      '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="#1A1A1A" stroke-width="13"/>'+
       '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="'+(over?"var(--red)":"url(#sg)")+'" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 65 65)"/>'+
-      '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7C5CFF"/><stop offset="100%" stop-color="#35D6C4"/></linearGradient></defs>'+
-      '<text x="65" y="63" text-anchor="middle" font-size="21" font-weight="800" fill="#E9EBF3" font-family="var(--mono)">'+Math.round(pct)+'%</text>'+
-      '<text x="65" y="80" text-anchor="middle" font-size="9" fill="#5C6379">used</text></svg>'+
+      '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3E6AE1"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs>'+
+      '<text x="65" y="63" text-anchor="middle" font-size="21" font-weight="800" fill="#F4F4F4" font-family="var(--mono)">'+Math.round(pct)+'%</text>'+
+      '<text x="65" y="80" text-anchor="middle" font-size="9" fill="#6E6E6E">used</text></svg>'+
     '<div style="flex:1;min-width:170px">'+
       '<div class="eyebrow">Groceries, gas, everything unplanned</div>'+
       '<div class="num big" style="margin:7px 0 4px;color:'+(over?"var(--red)":"var(--green)")+'">'+(over?"−"+money(left):money(left))+'</div>'+
@@ -880,7 +876,7 @@ function viewMonth(){
     pays+='<line x1="'+xv(d)+'" x2="'+xv(d)+'" y1="'+PT+'" y2="'+(H-PB)+'" stroke="rgba(52,211,153,.4)" stroke-dasharray="3 3"/>'+
      '<text x="'+xv(d)+'" y="'+(PT+9)+'" text-anchor="middle" font-size="9" fill="var(--green)" font-weight="700">PAYDAY</text>';});
   var xl="";[1,5,10,15,20,25,30].forEach(function(d){
-    xl+='<text x="'+xv(d)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="#5C6379" font-family="var(--mono)">'+d+'</text>';});
+    xl+='<text x="'+xv(d)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="#6E6E6E" font-family="var(--mono)">'+d+'</text>';});
   var rows=tr.map(function(t){
     return '<tr><td class="num" style="width:40px;color:var(--dim)">'+t.day+'</td>'+
      '<td style="'+(t.amt>0?"font-weight:700;color:var(--green)":"")+'">'+esc(t.name)+'</td>'+
@@ -895,15 +891,15 @@ function viewMonth(){
      '<p class="note" style="padding:6px 5px 10px;max-width:620px">Every account drafts from this one account. The line starts at zero on the 1st — wherever it dips, that much has to already be there. '+
        (t.paid?'<b>'+money(t.freed)+'/mo</b> of drafts have been removed because those accounts are paid off.':'')+'</p>'+
      '<svg viewBox="0 0 '+W+' '+H+'">'+
-       '<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF5E6C" stop-opacity=".26"/><stop offset="100%" stop-color="#FF5E6C" stop-opacity="0"/></linearGradient></defs>'+
+       '<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E31937" stop-opacity=".26"/><stop offset="100%" stop-color="#E31937" stop-opacity="0"/></linearGradient></defs>'+
        '<line x1="'+PL+'" x2="'+(W-14)+'" y1="'+yv(0)+'" y2="'+yv(0)+'" stroke="rgba(255,255,255,.18)"/>'+
-       '<text x="'+(PL-8)+'" y="'+(yv(0)+4)+'" text-anchor="end" font-size="10" fill="#5C6379" font-family="var(--mono)">0</text>'+
+       '<text x="'+(PL-8)+'" y="'+(yv(0)+4)+'" text-anchor="end" font-size="10" fill="#6E6E6E" font-family="var(--mono)">0</text>'+
        '<path d="'+path+' L'+xv(30)+','+yv(0)+' Z" fill="url(#rg)"/>'+
        '<path d="'+path+'" fill="none" stroke="var(--red)" stroke-width="2.3" stroke-linecap="round"/>'+marks+pays+xl+'</svg></div>'+
    '<div class="tiles">'+
-     tile("▦","#4C8DFF","Leaves every month",money(ev.filter(function(f){return f[2]<0;}).reduce(function(s,f){return s-f[2];},0)),"bills, minimums and the extra")+
-     tile("▲","#34D399","Lands every month",money(ev.filter(function(f){return f[2]>0;}).reduce(function(s,f){return s+f[2];},0)),"pay"+(new Date()>=DIS_START?" and disability":""))+
-     tile("◈","#7C5CFF","Left at month end",signed(net),net<0?"short before everyday spending":"before everyday spending",net<0?"var(--red)":"var(--green)")+
+     tile("▦","#3E6AE1","Leaves every month",money(ev.filter(function(f){return f[2]<0;}).reduce(function(s,f){return s-f[2];},0)),"bills, minimums and the extra")+
+     tile("▲","#22C55E","Lands every month",money(ev.filter(function(f){return f[2]>0;}).reduce(function(s,f){return s+f[2];},0)),"pay"+(new Date()>=DIS_START?" and disability":""))+
+     tile("◈","#3E6AE1","Left at month end",signed(net),net<0?"short before everyday spending":"before everyday spending",net<0?"var(--red)":"var(--green)")+
    '</div>'+
    '<div class="card pad" style="border-left:3px solid var(--amber)">'+
      '<div class="eyebrow">Two calls that fix most of this</div>'+
@@ -988,10 +984,10 @@ function viewCredit(){
       (by30?'On this plan the overall number is under 30% by <b>'+by30+'</b>':'')+(by10?' and under 10% by <b>'+by10+'</b>.':'.')+'</div></div>'+
 
   '<div class="tiles">'+
-    tile("\u25CE","#FF5E6C","Cards over 30%",over30+" of "+live.length,money(costToThreshold(.3))+" clears all of them")+
-    tile("\u25CB","#FBBF24","Under 10% everywhere",money(costToThreshold(.1)),"the point where cards stop hurting")+
-    tile("\u2713","#34D399","Open with $0 on them",keep.length,money(keepTotal)+" of limit \u2014 keep every one")+
-    tile("\u2191","#7C5CFF","Extra goes to",tg?esc(tg.name):"\u2014",tg&&isCard(tg)?Math.round(util(tg)*100)+"% full \u2014 fullest card first":"loans, once the cards are down")+
+    tile("\u25CE","#E31937","Cards over 30%",over30+" of "+live.length,money(costToThreshold(.3))+" clears all of them")+
+    tile("\u25CB","#F59E0B","Under 10% everywhere",money(costToThreshold(.1)),"the point where cards stop hurting")+
+    tile("\u2713","#22C55E","Open with $0 on them",keep.length,money(keepTotal)+" of limit \u2014 keep every one")+
+    tile("\u2191","#3E6AE1","Extra goes to",tg?esc(tg.name):"\u2014",tg&&isCard(tg)?Math.round(util(tg)*100)+"% full \u2014 fullest card first":"loans, once the cards are down")+
   '</div>'+
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
@@ -1034,6 +1030,7 @@ function viewCredit(){
         count of accounts carrying a balance and frees their draft.
      3. Whatever is left goes to the loans and plans by interest bleed. */
 var windTest="";
+var CASH_FLOOR=300, CHEAP_KILL=500;
 var TIERS=[[.90,"under 90%","a maxed card reads worst"],
   [.50,"under 50%","stops reading as maxed"],
   [.30,"under 30%","the line every model watches"],
@@ -1046,8 +1043,9 @@ function windfallPlan(W){
   if(W<=0)return r;
   var bal={};planAccounts().forEach(function(x){bal[x.name]=x.current;});
   var pool=W;
+  /* keep the two-month forecast at least CASH_FLOOR above zero */
   if(state.cash.updated){var t=troughOf(workingBalance()).tr;r.trough=t;
-    if(t.bal<0){r.reserve=Math.min(pool,Math.ceil(-t.bal/10)*10);pool-=r.reserve;}}
+    if(t.bal<CASH_FLOOR){r.reserve=Math.min(pool,Math.ceil((CASH_FLOOR-t.bal)/10)*10);pool-=r.reserve;}}
   var order=[],byName={};
   function give(x,amt,ti){amt=Math.round(Math.min(amt,pool,bal[x.name]));if(amt<=0)return;
     var it=byName[x.name];
@@ -1056,11 +1054,18 @@ function windfallPlan(W){
   var cards=planAccounts().filter(function(x){return isCard(x)&&x.current>0;});
   for(var ti=0;ti<TIERS.length&&pool>0;ti++){
     var f=TIERS[ti][0];
+    /* once nothing is maxed, a small card is worth killing outright: a zero
+       balance beats a lower one, and its draft comes back every month */
+    if(ti===1)cards.filter(function(x){return bal[x.name]>0&&bal[x.name]<=CHEAP_KILL;})
+      .sort(function(a,b){return bal[a.name]-bal[b.name];}).forEach(function(x){give(x,bal[x.name],4);});
     cards.map(function(x){var target=f>0?Math.floor(x.limit*f)-1:0;return {x:x,gap:bal[x.name]-target};})
       .filter(function(n){return n.gap>0;}).sort(function(a,b){return a.gap-b.gap;})
       .forEach(function(n){give(n.x,n.gap,ti);});
   }
-  if(pool>0){planAccounts().filter(function(x){return !isCard(x)&&x.current>0;}).sort(rank)
+  /* a lump sum saves interest at the account's rate, whatever its size — so
+     loans and plans go by APR, highest first; a whole payoff also frees its draft */
+  if(pool>0){planAccounts().filter(function(x){return !isCard(x)&&x.current>0;})
+    .sort(function(p,q){return q.apr-p.apr||p.current-q.current;})
     .forEach(function(x){if(pool>0)give(x,bal[x.name],-1);});}
   /* label each card by the line it actually crossed, not the one it was aiming at */
   order.forEach(function(it){if(it.limit<=0)return;it.tier=-2;
@@ -1094,7 +1099,7 @@ function windfallPlan(W){
 function windRows(r){
   var rows=r.items.map(function(it,i){
     var card=it.limit>0;
-    var why=it.tier>=0?TIERS[it.tier][1]+" \u2014 "+TIERS[it.tier][2]:it.tier===-2?"toward under 90% \u2014 ran out here":"biggest interest bleed left";
+    var why=it.tier>=0?TIERS[it.tier][1]+" \u2014 "+TIERS[it.tier][2]:it.tier===-2?"toward under 90% \u2014 ran out here":"highest rate left \u00b7 "+it.apr.toFixed(1)+"%";
     if(it.to<=0)why="paid off"+(card?" \u2014 keep the card open":"")+" \u00b7 frees "+money(it.min)+"/mo";
     return '<div style="display:flex;gap:11px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:center">'+
       '<div class="num" style="width:20px;flex-shrink:0;font-size:11px;color:var(--dim)">'+(i+1)+'</div>'+
@@ -1111,17 +1116,18 @@ function windOut(){
   if(W<=0)return '<div class="card pad" style="border-left:3px solid var(--violet)">'+
     '<div class="eyebrow">How it decides</div>'+
     '<ol style="font-size:13px;line-height:1.7;padding-left:20px;margin:9px 0 0">'+
-      '<li><b>Cash first.</b> If the two-month forecast dips under zero, that hole gets filled before any debt. A late payment costs more score than any payoff buys back.</li>'+
+      '<li><b>Cash first.</b> The two-month forecast is kept at least '+money(CASH_FLOOR)+' above zero before a dollar goes to debt. A late payment costs more score than any payoff buys back.</li>'+
       '<li><b>Every card under 90%.</b> A maxed card is the worst thing on the file after the late itself \u2014 it is what set off the limit cuts.</li>'+
-      '<li><b>Then under 50%, 30%, 10%, and to zero.</b> Inside each step, the card that is cheapest to get over the line goes first, so more cards cross per dollar and the small ones die outright.</li>'+
-      '<li><b>Then loans and plans, biggest interest bleed first.</b></li></ol>'+
+      '<li><b>Small cards paid off outright.</b> Anything under '+money(CHEAP_KILL)+' goes to zero: one less account with a balance, and its draft comes back every month.</li>'+
+      '<li><b>Then every card under 50%, 30%, 10%, and to zero,</b> cheapest to cross first, so more cards clear per dollar.</li>'+
+      '<li><b>Then loans and plans, highest rate first.</b> A lump sum saves interest at the rate, not the balance, so the 36% Affirm and Klarna plans come before the bigger Upstart loans.</li></ol>'+
     '<p class="note" style="margin-top:11px">Type an amount above and it lays out exactly where each dollar goes and what it does to the debt-free date, the interest, and utilisation.</p></div>';
   var r=windfallPlan(W),a=r.after,b=r.before;
   var saved=Math.max(0,b.interest-a.interest),mo=Math.max(0,b.months-a.months);
   var reserve=r.reserve>0?'<div class="card pad" style="border-left:3px solid var(--amber)">'+
     '<div class="eyebrow">Keep in checking</div>'+
     '<div class="num" style="font-size:26px;font-weight:800;color:var(--amber);margin:6px 0 4px">'+money(r.reserve)+'</div>'+
-    '<div class="note">The forecast bottoms out at <b>\u2212'+money(r.trough.bal)+'</b> on '+fmtDate(r.trough.date)+'. This covers it. Nothing below is worth a late payment.</div></div>':'';
+    '<div class="note">The forecast bottoms out at <b>'+signed(r.trough.bal)+'</b> on '+fmtDate(r.trough.date)+'. This keeps it at least '+money(CASH_FLOOR)+' above zero. Nothing below is worth a late payment.</div></div>':'';
   var altNote='';
   if(r.alt&&r.alt.first){
     var d=Math.round(a.interest-r.alt.interest);
@@ -1136,10 +1142,10 @@ function windOut(){
     '<div class="note">Everything in the plan is paid. Put it toward the cars or keep it as a cushion.</div></div>':'';
   return reserve+
    '<div class="tiles">'+
-    tile("\u25C8","#34D399","Debt-free",a.free,(mo?mo+" month"+(mo>1?"s":"")+" sooner \u00b7 was "+b.free:"same month \u00b7 was "+b.free))+
-    tile("\u2193","#7C5CFF","Interest saved",money(saved),"across the rest of the payoff")+
-    tile("\u25CE","#FF5E6C","Utilisation",Math.round(b.util*100)+"% \u2192 "+Math.round(a.util*100)+"%",a.over30+" card"+(a.over30===1?"":"s")+" over 30%, was "+b.over30)+
-    tile("\u2713","#FBBF24","Paid off outright",a.zeroed,money(a.freed)+"/mo of drafts freed")+
+    tile("\u25C8","#22C55E","Debt-free",a.free,(mo?mo+" month"+(mo>1?"s":"")+" sooner \u00b7 was "+b.free:"same month \u00b7 was "+b.free))+
+    tile("\u2193","#3E6AE1","Interest saved",money(saved),"across the rest of the payoff")+
+    tile("\u25CE","#E31937","Utilisation",Math.round(b.util*100)+"% \u2192 "+Math.round(a.util*100)+"%",a.over30+" card"+(a.over30===1?"":"s")+" over 30%, was "+b.over30)+
+    tile("\u2713","#F59E0B","Paid off outright",a.zeroed,money(a.freed)+"/mo of drafts freed")+
    '</div>'+
    '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
      '<div style="font-size:14px;font-weight:700">Send it here, in this order</div>'+
