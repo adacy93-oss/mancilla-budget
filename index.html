@@ -1214,9 +1214,73 @@ if(!PRIVATE){
   setInterval(function(){if(!document.hidden)gsPull();},15000);
 }
 
+/* ---------------- WHAT IF ----------------
+   Move the levers and watch the debt-free month, the interest, the cars
+   and the utilisation dates move. Nothing here is saved — it is a sandbox. */
+var WI={extra:null,dis:null,lump:0,pause:0};
+function wiExtra(){return WI.extra==null?EXTRA_BASE:WI.extra;}
+function wiDis(){return WI.dis==null?DIS_TO_DEBT:WI.dis;}
+function firstUnder(p,frac){
+  var L=cardLimitTotal(),cards=planAccounts().filter(isCard);if(!L)return "\u2014";
+  for(var k=0;k<p.pts.length;k++){var b=p.pts[k].bal,sum=0;cards.forEach(function(c){sum+=Math.max(0,b[c.name]||0);});
+    if(sum/L<frac)return keyFromMi(p.pts[k].i);}
+  return "\u2014";
+}
+function whatIf(){
+  var bal={};planAccounts().forEach(function(x){bal[x.name]=x.current;});
+  if(WI.lump>0){windfallPlan(WI.lump).items.forEach(function(it){bal[it.name]=Math.max(0,it.to);});}
+  var list=planAccounts().map(function(x){return {name:x.name,bal:bal[x.name],apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};});
+  var i0=nowIdx(),ex=wiExtra(),ds=wiDis(),pz=WI.pause;
+  function pool(d,i){var m=i-i0;return BASE_MIN+(m<pz?0:ex+(d>=DIS_START?ds:0));}
+  var p=simulate(list,pool,420),z=p.zeroIdx;
+  var c=simulate(carAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min};}),
+    function(d,i){return CAR_MIN+(i>=z?pool(d,i):0);},420);
+  return {free:p.done?keyFromMi(p.zeroIdx):"\u2014",months:p.months,interest:p.interest,
+    cars:c.done?keyFromMi(c.zeroIdx):"\u2014",u30:firstUnder(p,.3),u10:firstUnder(p,.1),
+    monthly:ex+ds};
+}
+function wiOut(){
+  var w=whatIf(),p=plan(),c=cars();
+  var dm=p.months-w.months,di=Math.round(p.interest-w.interest);
+  function row(l,v,base){return '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--line)">'+
+    '<span style="font-size:12.5px;color:var(--mut)">'+l+'</span><span class="num" style="font-size:14px;font-weight:700">'+v+
+    (base!=null&&base!==v?' <small style="font-weight:400;color:var(--dim)">now '+base+'</small>':'')+'</span></div>';}
+  var verdict=dm>0?'<b style="color:var(--green)">'+dm+' month'+(dm>1?'s':'')+' sooner</b> and <b class="num" style="color:var(--green)">'+money(di)+'</b> less interest than the plan you are on.'
+    :dm<0?'<b style="color:var(--red)">'+(-dm)+' month'+(dm<-1?'s':'')+' later</b> and <b class="num" style="color:var(--red)">'+money(-di)+'</b> more interest than the plan you are on.'
+    :di>0?'Same month, <b class="num" style="color:var(--green)">'+money(di)+'</b> less interest.':di<0?'Same month, <b class="num" style="color:var(--red)">'+money(-di)+'</b> more interest.':'This is the plan you are on.';
+  return '<div style="font-size:13px;line-height:1.6;margin:2px 0 8px">'+verdict+'</div>'+
+    row("Debt-free",w.free,p.done?keyFromMi(p.zeroIdx):"\u2014")+
+    row("Months left",w.months,p.months)+
+    row("Interest from here",money(w.interest),money(p.interest))+
+    row("Cars gone",w.cars,c.done?keyFromMi(c.zeroIdx):"\u2014")+
+    row("Cards under 30%",w.u30,utilUnderBy(.3)||"\u2014")+
+    row("Cards under 10%",w.u10,utilUnderBy(.1)||"\u2014")+
+    row("Going to debt each month",money(BASE_MIN+w.monthly),money(BASE_MIN+extraFor(DIS_START)));
+}
+function paintWi(){var e=document.getElementById("wiout");if(e)e.innerHTML=wiOut();
+  ["extra","dis","lump","pause"].forEach(function(k){var l=document.getElementById("wil-"+k);if(!l)return;
+    var v=k==="extra"?wiExtra():k==="dis"?wiDis():WI[k];
+    l.textContent=k==="pause"?(v?v+" month"+(v>1?"s":""):"none"):money(v)+(k==="lump"?"":"/mo");});}
+function slider(id,label,min,max,step,val,note){
+  return '<div style="padding:10px 0 4px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span>'+label+'</span><b class="num" id="wil-'+id+'"></b></div>'+
+    '<input type="range" id="wi-'+id+'" min="'+min+'" max="'+max+'" step="'+step+'" value="'+val+'" style="width:100%;padding:0;background:none;border:0;accent-color:var(--violet)">'+
+    (note?'<div class="note" style="font-size:10.5px;margin-top:3px">'+note+'</div>':'')+'</div>';
+}
+function viewWhatIf(){
+  return '<div class="grid">'+
+   '<div class="card pad">'+
+     slider("extra","Extra from paychecks",0,2500,25,wiExtra(),"the amount that goes out on the 8th, before disability")+
+     slider("dis","Disability sent to debt",0,DISABILITY,50,wiDis(),"of the "+money(DISABILITY)+" that lands each month from October")+
+     slider("lump","One-time cash today",0,20000,250,WI.lump,"placed the way the Extra cash section would")+
+     slider("pause","Skip the extra for",0,6,1,WI.pause,"months of minimums only, starting now")+
+   '</div>'+
+   '<div class="card pad" id="wiout">'+wiOut()+'</div>'+
+   '<div class="note" style="padding:0 4px">Sliders change nothing real. To actually change the plan, tell Claude the new split and it ships it.</div></div>';
+}
+
 /* ---------------- shell ---------------- */
 var TABS=[["today","Today","◉"],["plan","Plan","◈"],["accounts","Accounts","▤"]];
-var FOLDS={wind:false,credit:false,spend:false,month:false,sync:false};
+var FOLDS={wind:false,whatif:false,credit:false,spend:false,month:false,sync:false};
 function fold(id,title,sub,html){
   return '<details class="fold" data-fold="'+id+'"'+(FOLDS[id]?' open':'')+'><summary>'+title+(sub?'<small>'+sub+'</small>':'')+'</summary><div class="body">'+html+'</div></details>';
 }
@@ -1235,10 +1299,12 @@ function render(){
     tab==="today"? viewNow()+fold("spend","Spending",money(Math.max(0,budgetLeft()))+" left this month",viewSpend()) :
     tab==="plan"? viewDescent()+
       fold("wind","Extra cash came in",(Number(windTest)>0?money(windTest):"where to send it"),viewWind())+
+      fold("whatif","What if","move the levers",viewWhatIf())+
       fold("credit","Credit",Math.round(u*100)+"% utilisation"+(tg?" \u00b7 target "+esc(tg.name):""),viewCredit()) :
     viewAccounts()+fold("month","This month, day by day","every draft and paycheck",viewMonth())+
       fold("sync","Sharing and reset","",viewSync()))+'</div>';
   if(tab==="today")paintSpend();
+  if(tab==="plan")paintWi();
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -1285,7 +1351,8 @@ function showLink(u){var e=document.getElementById("linkbox");if(!e)return;
   var t=e.querySelector("textarea");t.focus();t.select();}
 document.addEventListener("input",function(e){
   if(e.target&&e.target.id==="spendin"){spendTest=e.target.value;paintSpend();}
-  if(e.target&&e.target.id==="windin"){windTest=e.target.value;paintWind();}});
+  if(e.target&&e.target.id==="windin"){windTest=e.target.value;paintWind();}
+  if(e.target&&e.target.id&&e.target.id.slice(0,3)==="wi-"){WI[e.target.id.slice(3)]=Number(e.target.value)||0;paintWi();}});
 document.addEventListener("change",function(e){
   var el=e.target;
   if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);save();render();}
