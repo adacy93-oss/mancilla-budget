@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Descent">
-<meta name="theme-color" content="#0A0B12">
+<meta name="apple-mobile-web-app-title" content="Mancilla Budget">
+<meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex, nofollow">
-<title>Descent</title>
+<title>Mancilla Budget</title>
 <style>
 :root{
-  --bg:#0A0B12; --panel:#14161F; --panel2:#1B1E2A; --line:rgba(255,255,255,.07);
-  --line2:rgba(255,255,255,.13);
-  --tx:#E9EBF3; --mut:#868DA6; --dim:#5C6379;
-  --violet:#7C5CFF; --cyan:#35D6C4; --green:#34D399; --red:#FF5E6C; --amber:#FBBF24; --blue:#4C8DFF;
+  --bg:#000000; --panel:#111111; --panel2:#1A1A1A; --line:rgba(255,255,255,.09);
+  --line2:rgba(255,255,255,.18);
+  --tx:#F4F4F4; --mut:#A6A6A6; --dim:#6E6E6E;
+  --violet:#3E6AE1; --cyan:#FFFFFF; --green:#22C55E; --red:#E31937; --amber:#F59E0B; --blue:#3E6AE1;
   --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Helvetica,sans-serif;
   --mono:ui-monospace,'SF Mono',Menlo,monospace;
 }
@@ -23,52 +23,50 @@ html,body{margin:0;padding:0;background:var(--bg)}
 body{color:var(--tx);font-family:var(--sans);-webkit-text-size-adjust:100%;
   padding-bottom:calc(40px + env(safe-area-inset-bottom));overflow-x:hidden}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.eyebrow{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim);font-weight:700}
-.shell{display:flex;min-height:100vh;min-height:100dvh}
+@keyframes draw{to{stroke-dashoffset:0}}
+.draw{stroke-dasharray:3000;stroke-dashoffset:3000;animation:draw 1.8s cubic-bezier(.4,0,.2,1) forwards}
+.eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.shell{display:flex;min-height:100vh}
 
 /* sidebar */
 aside{width:212px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
   padding:22px 14px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{display:flex;align-items:center;gap:10px;padding:0 8px 20px}
-.mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--violet),var(--cyan));
-  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#0A0B12;flex-shrink:0}
+.mark{width:30px;height:30px;border-radius:4px;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#000000;flex-shrink:0}
 .brand b{font-size:15px;font-weight:700;letter-spacing:-.01em}
 .brand span{display:block;font-size:10px;color:var(--dim);font-weight:500}
 aside button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
-  color:var(--mut);font:600 13px var(--sans);padding:10px 12px;border-radius:9px;cursor:pointer;
+  color:var(--mut);font:600 13px var(--sans);padding:10px 12px;border-radius:6px;cursor:pointer;
   margin-bottom:2px;text-align:left;transition:background .15s,color .15s}
 aside button:hover{background:var(--panel2);color:var(--tx)}
-aside button[data-on="true"]{background:linear-gradient(90deg,rgba(124,92,255,.22),rgba(124,92,255,.04));
+aside button[data-on="true"]{background:rgba(255,255,255,.08);
   color:#fff}
 aside button[data-on="true"] .dot{background:var(--violet)}
 .dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex-shrink:0}
-.sidefoot{margin-top:18px;padding:14px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--line)}
+.sidefoot{margin-top:18px;padding:14px 12px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}
 
 main{flex:1;min-width:0;padding:26px 26px 60px}
 .mtabs{display:none}
 
-.hero{background:
-   radial-gradient(120% 140% at 100% 0%,rgba(124,92,255,.20),transparent 55%),
-   radial-gradient(100% 120% at 0% 100%,rgba(53,214,196,.13),transparent 55%),
-   var(--panel);
-  border:1px solid var(--line);border-radius:18px;padding:22px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:22px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px}
 .pad{padding:18px}
 .grid{display:grid;gap:16px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:14px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:15px}
 .chip{width:26px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
   font-size:13px;margin-bottom:9px}
 .big{font-size:31px;font-weight:800;letter-spacing:-.03em;line-height:1.05}
 .pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px}
 input,textarea{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);
-  padding:9px 11px;border-radius:9px;font-size:16px;font-family:var(--mono);text-align:right;width:112px}
+  padding:9px 11px;border-radius:6px;font-size:16px;font-family:var(--mono);text-align:right;width:112px}
 input::placeholder{color:var(--dim)}
 input:focus,button:focus-visible{outline:2px solid var(--violet);outline-offset:1px}
-.btn{background:var(--violet);color:#fff;border:0;padding:11px 17px;border-radius:9px;
+.btn{background:var(--violet);color:#fff;border:0;padding:12px 18px;border-radius:4px;text-transform:uppercase;letter-spacing:.06em;
   font:700 12px var(--sans);cursor:pointer}
 .btn:hover{filter:brightness(1.12)}
-.btn.ghost{background:var(--panel2);color:var(--mut);border:1px solid var(--line2);padding:7px 12px;font-size:11px}
+.btn.ghost{background:transparent;color:var(--tx);border:1px solid var(--line2);padding:7px 12px;font-size:11px}
 .btn.ghost:hover{color:var(--tx)}
 table{width:100%;border-collapse:collapse}
 th{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700;
@@ -78,26 +76,34 @@ td{padding:11px 13px;border-bottom:1px solid var(--line);font-size:12.5px;text-a
 td:first-child{text-align:left}
 tr:last-child td{border-bottom:0}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-svg{width:100%;display:block;transform:translateZ(0)}
+svg{width:100%;display:block}
 .note{font-size:11.5px;color:var(--mut);line-height:1.6}
+details.fold{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+details.fold>summary{list-style:none;cursor:pointer;padding:15px 16px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;color:var(--tx)}
+details.fold>summary::-webkit-details-marker{display:none}
+details.fold>summary::after{content:"+";font-family:var(--mono);color:var(--dim);font-size:16px}
+details.fold[open]>summary::after{content:"\2212"}
+details.fold>summary small{font-weight:400;color:var(--dim);font-size:11px;margin-left:8px}
+details.fold>.body{padding:0 10px 10px}
+details.fold>.body>.grid{gap:12px}
 .mini{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden}
 .mini>i{display:block;height:100%;border-radius:99px}
 #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);
   background:var(--panel2);border:1px solid var(--line2);color:var(--tx);padding:12px 18px;
-  border-radius:11px;font-size:13px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
+  border-radius:6px;font-size:13px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
 #toast.on{transform:translateX(-50%) translateY(0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (max-width:860px){
   aside{display:none}
   main{padding:16px 14px 60px}
-  .mtabs{display:block;position:sticky;top:0;z-index:20;background:var(--bg);
-    margin:-16px -14px 14px;padding:12px 14px 0;transform:translateZ(0);
+  .mtabs{display:block;position:sticky;top:0;z-index:20;background:rgba(10,11,18,.93);
+    backdrop-filter:blur(14px);margin:-16px -14px 14px;padding:12px 14px 0;
     padding-top:calc(12px + env(safe-area-inset-top));border-bottom:1px solid var(--line)}
   .mtabs .row{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none}
   .mtabs .row::-webkit-scrollbar{display:none}
   .mtabs button{background:var(--panel);border:1px solid var(--line);color:var(--mut);
     font:700 11.5px var(--sans);padding:8px 14px;border-radius:99px;white-space:nowrap;cursor:pointer}
-  .mtabs button[data-on="true"]{background:var(--violet);border-color:var(--violet);color:#fff}
+  .mtabs button[data-on="true"]{background:#fff;border-color:#fff;color:#000}
   .big{font-size:27px}
 }
 </style>
@@ -107,28 +113,37 @@ svg{width:100%;display:block;transform:translateZ(0)}
 <aside>
   <div class="brand">
     <div class="mark">D</div>
-    <div><b>Descent</b><span>Hello Adacy</span></div>
+    <div><b>Descent</b><span>Adacy &amp; wife</span></div>
   </div>
   <div id="nav"></div>
   <div class="sidefoot">
     <div class="eyebrow">Debt-free</div>
     <div id="sidefree" style="font-size:17px;font-weight:800;margin-top:4px">—</div>
     <div class="note" id="sidecars" style="font-size:10.5px">&nbsp;</div>
+    <div class="syncstat" style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line);font-size:10px;color:var(--dim)">Connecting&hellip;</div>
   </div>
 </aside>
 <main>
-  <div class="mtabs"><div style="font-size:15px;font-weight:800;letter-spacing:-.01em;padding:0 2px 8px">Hello Adacy</div><div class="row" id="mnav"></div></div>
+  <div class="mtabs"><div class="row" id="mnav"></div></div>
   <div id="view"></div>
 </main>
 </div>
 <div id="toast"></div>
 <script>
 "use strict";
-var START_TOTAL=48923, CAR_TOTAL=75500, VAR_BUDGET=780;
+var START_TOTAL=52253, CAR_TOTAL=75500;
+/* Everyday spending is a flat $30 a day — groceries, gas, anything unplanned.
+   Each day after today reserves exactly $30, no more, no less. Whatever you
+   do not spend today is not spread onto tomorrow: it simply stays in the
+   balance, so "safe to spend" always tells the truth. */
+var VAR_DAILY=30;
+function daysInMonth(d){return new Date(d.getFullYear(),d.getMonth()+1,0).getDate();}
+function monthBudget(){return VAR_DAILY*daysInMonth(new Date());}
+var VAR_BUDGET=VAR_DAILY*30;
 
 /* Everyday spending assumed per day in future months, once this month's
    budget no longer applies. */
-var VAR_MIN_RATE=VAR_BUDGET/30;
+var VAR_MIN_RATE=VAR_DAILY;
 
 var MONLBL=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 
@@ -202,14 +217,14 @@ function thisMonthKey(){var d=new Date();return MONLBL[d.getMonth()]+" "+d.getFu
    instalment loan or plan — it has no utilisation. */
 var SEED=[
  ["BRIGHTWAY",1217,35.99,55,5,"CARD",1650],["SEEN",950,35.99,55,15,"CARD",1000],
- ["CHARIZARD",257,35.98,144,25,"BNPL",0],["AFFIRM VIRTUAL",5294,35.98,562,5,"BNPL",0],
+ ["CHARIZARD",0,35.98,144,25,"BNPL",0],["AFFIRM VIRTUAL",5294,35.98,562,5,"BNPL",0],
  ["AFFIRM AMZN 5",609,34.00,72,1,"BNPL",0],["UPSTART 2",11629,32.32,425,28,"LOAN",0],
  ["UPSTART 1",7716,30.21,320,4,"LOAN",0],["PAYPAL",1700,29.99,32,22,"CARD",2000],
- ["AMEX ADACY",860,29.99,40,9,"CARD",1000],["AFFIRM AMZN 1",209,29.99,43,22,"BNPL",0],
- ["AFFIRM AMZN 4",151,29.99,54,1,"BNPL",0],["AFFIRM AMZN 3",149,29.98,51,27,"BNPL",0],
+ ["AMEX ADACY",0,29.99,40,9,"CARD",1000],["AFFIRM AMZN 1",0,29.99,43,22,"BNPL",0],
+ ["AFFIRM AMZN 4",0,29.99,54,1,"BNPL",0],["AFFIRM AMZN 3",0,29.98,51,27,"BNPL",0],
  ["CAP ONE VENTURE",325,29.00,25,1,"CARD",500],["SPARROW",815,28.99,42,7,"CARD",900],
- ["CAP ONE SAVOR",400,28.74,40,15,"CARD",500],["APPLE CARD",450,27.74,20,30,"CARD",500],
- ["CHASE",6700,27.49,230,17,"CARD",7200],["CREDIT ONE",188,27.49,40,15,"CARD",1750],
+ ["CAP ONE SAVOR",375,28.74,40,15,"CARD",500],["APPLE CARD",0,27.74,20,30,"CARD",500],
+ ["CHASE",0,27.49,230,17,"CARD",7200],["CREDIT ONE",0,27.49,40,15,"CARD",1750],
  ["USAA",920,27.40,45,12,"CARD",1000],["CITI COSTCO",3905,26.74,120,20,"CARD",4000],
  ["AFFIRM AMZN 2",484,24.71,109,23,"BNPL",0],["UPSTART 3",2676,0.0,243,22,"LOAN",0],
  ["BEST BUY",997,31.99,40,8,"CARD",1150],["KLARNA",1338,34.99,213,17,"BNPL",0],
@@ -250,9 +265,9 @@ var KINDCOL={CARD:"var(--red)",LOAN:"var(--blue)",BNPL:"var(--amber)",AUTO:"var(
 var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 var PRIVATE=false; /* the artifact build sets this true */
-var KEY="adacy-debt-v1";
+var KEY="adacy-debt-v2";
 var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[]};
-var tab="descent", spendTest="";
+var tab="today", spendTest="";
 
 function money(n){return "$"+Math.round(Math.abs(Number(n)||0)).toLocaleString("en-US");}
 function signed(n){return (n<0?"−":"")+money(n);}
@@ -432,7 +447,12 @@ function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(
 function spendThisMonth(){var k=monthKey(new Date());
   return (state.spend||[]).filter(function(e){return e.date.slice(0,7)===k;})
     .reduce(function(s,e){return s+Number(e.amount||0);},0);}
-function budgetLeft(){return VAR_BUDGET-spendThisMonth();}
+function budgetLeft(){return monthBudget()-spendThisMonth();}
+function spentToday(){var k=new Date(),key=k.getFullYear()+"-"+String(k.getMonth()+1).padStart(2,"0")+"-"+String(k.getDate()).padStart(2,"0");
+  return (state.spend||[]).filter(function(e){return e.date===key;}).reduce(function(s,e){return s+Number(e.amount||0);},0);}
+function todayLeft(){return VAR_DAILY-spentToday();}
+/* what you'd have spent by today at $30 a day, versus what you actually have */
+function paceDiff(){return VAR_DAILY*new Date().getDate()-spendThisMonth();}
 function daysLeftInMonth(){var d=new Date();
   return Math.max(1,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate()+1);}
 
@@ -451,11 +471,14 @@ function workingBalance(){return (Number(state.cash.balance)||0)-loggedSinceRefr
    the working balance, so it is not reserved for a second time. */
 function daysAheadInMonth(){var d=new Date();
   return new Date(d.getFullYear(),d.getMonth()+1,0).getDate()-d.getDate();}
-function currentDrip(){var n=daysAheadInMonth();
-  return n>0?Math.max(0,budgetLeft())/n:0;}
+/* If you have overspent the $30 a day so far this month, the overage is
+   clawed back evenly from the days left in the month, so the month still
+   comes in at $30 a day. Underspending never raises a later day. */
+function catchUpPerDay(){var over=Math.max(0,-paceDiff()),n=daysAheadInMonth();return n>0?over/n:0;}
+function currentDrip(){return Math.max(0,VAR_DAILY-catchUpPerDay());}
 function dripFor(d){var n=new Date();
   if(d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth())return currentDrip();
-  return VAR_BUDGET/30;}
+  return VAR_DAILY;}
 
 /* The month's drafts, as they actually are now. A paid-off account no longer
    drafts, and an account with less left than its minimum only drafts what is
@@ -536,18 +559,18 @@ function viewDescent(){
 
   var grid="";[0,.25,.5,.75,1].forEach(function(f){var v=maxY*f;
     grid+='<line x1="'+PL+'" x2="'+(W-PR)+'" y1="'+yv(v)+'" y2="'+yv(v)+'" stroke="rgba(255,255,255,.06)"/>'+
-     '<text x="'+(PL-8)+'" y="'+(yv(v)+4)+'" text-anchor="end" font-size="10" fill="#5C6379" font-family="var(--mono)">'+(v?Math.round(v/1000)+"k":"0")+'</text>';});
+     '<text x="'+(PL-8)+'" y="'+(yv(v)+4)+'" text-anchor="end" font-size="10" fill="#6E6E6E" font-family="var(--mono)">'+(v?Math.round(v/1000)+"k":"0")+'</text>';});
   var step=lastI>24?4:3,xlab="";
   for(var i=0;i<=lastI;i+=step){
-    xlab+='<text x="'+xv(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(i)+'</text>';}
+    xlab+='<text x="'+xv(i)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(i)+'</text>';}
   if((lastI%step)!==0)
-    xlab+='<text x="'+xv(lastI)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(lastI)+'</text>';
+    xlab+='<text x="'+xv(lastI)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(lastI)+'</text>';
 
   var dots="",dp=[];
   state.history.forEach(function(h){
     var d=new Date(h.date+"T00:00:00"),i=mi(d);
     if(i>=0&&i<=lastI){var X=xv(i),Y=yv(Math.min(h.total,maxY));dp.push((dp.length?"L":"M")+X+","+Y);
-      dots+='<circle cx="'+X+'" cy="'+Y+'" r="4.5" fill="var(--amber)" stroke="#0A0B12" stroke-width="2"/>';}});
+      dots+='<circle cx="'+X+'" cy="'+Y+'" r="4.5" fill="var(--amber)" stroke="#000000" stroke-width="2"/>';}});
   var dline=dp.length>1?'<path d="'+dp.join(" ")+'" fill="none" stroke="var(--amber)" stroke-width="2" stroke-dasharray="4 3"/>':"";
 
   /* where the original plan said you would be this month, vs where you are */
@@ -561,14 +584,14 @@ function viewDescent(){
   var gg="",gr="";
   for(var g=0;g<=lastI;g+=step){
     gg+='<line x1="'+gx(g)+'" x2="'+gx(g)+'" y1="16" y2="'+(GH-20)+'" stroke="rgba(255,255,255,.06)"/>'+
-      '<text x="'+gx(g)+'" y="10" text-anchor="middle" font-size="9" fill="#5C6379" font-family="var(--mono)">'+keyFromMi(g)+'</text>';}
+      '<text x="'+gx(g)+'" y="10" text-anchor="middle" font-size="9" fill="#6E6E6E" font-family="var(--mono)">'+keyFromMi(g)+'</text>';}
   var ni=nowIdx();
   gg+='<line x1="'+gx(ni)+'" x2="'+gx(ni)+'" y1="16" y2="'+(GH-20)+'" stroke="rgba(124,92,255,.55)" stroke-dasharray="3 3"/>';
   rows.forEach(function(x,r){var y=22+r*RH,done=x.current<=0;
-    gr+='<text x="'+(GPL-8)+'" y="'+(y+8)+'" text-anchor="end" font-size="9" fill="'+(done?"#5C6379":"#B9BFD2")+'" font-weight="600"'+(done?' text-decoration="line-through"':'')+'>'+esc(x.name)+'</text>'+
+    gr+='<text x="'+(GPL-8)+'" y="'+(y+8)+'" text-anchor="end" font-size="9" fill="'+(done?"#6E6E6E":"#B9BFD2")+'" font-weight="600"'+(done?' text-decoration="line-through"':'')+'>'+esc(x.name)+'</text>'+
       '<rect x="'+gx(0)+'" y="'+y+'" width="'+Math.max(3,gx(x.i)-gx(0))+'" height="8" rx="4" fill="'+(done?"#2A2E3D":KINDCOL[x.kind])+'" opacity="'+(done?1:.8)+'"/>'+
       '<circle cx="'+gx(x.i)+'" cy="'+(y+4)+'" r="3" fill="var(--green)"/>'+
-      '<text x="'+(gx(x.i)+7)+'" y="'+(y+7.5)+'" font-size="8" fill="#5C6379" font-family="var(--mono)">'+(done?"PAID":x.gone)+'</text>';});
+      '<text x="'+(gx(x.i)+7)+'" y="'+(y+7.5)+'" font-size="8" fill="#6E6E6E" font-family="var(--mono)">'+(done?"PAID":x.gone)+'</text>';});
 
   var tg=targetAccount(), carB=carAccounts().reduce(function(s,x){return s+Math.max(0,x.current);},0);
   var amt=tg?Math.min(extraThisMonth(),Math.max(0,Math.round(tg.current-tg.min))):0;
@@ -590,23 +613,23 @@ function viewDescent(){
   '<div class="card" style="padding:18px 14px 8px">'+
     '<div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 5px 10px;flex-wrap:wrap;gap:6px">'+
       '<div class="eyebrow">Balance to zero · '+monthsLeft+' months left</div>'+
-      '<div style="font-size:10px;color:var(--dim)"><span style="color:var(--cyan)">━</span> from today’s numbers &nbsp; <span style="color:#4A5068">┈</span> original plan &nbsp; <span style="color:var(--amber)">●</span> recorded</div></div>'+
+      '<div style="font-size:10px;color:var(--dim)"><span style="color:var(--cyan)">━</span> from today’s numbers &nbsp; <span style="color:#3A3A3A">┈</span> original plan &nbsp; <span style="color:var(--amber)">●</span> recorded</div></div>'+
     '<svg viewBox="0 0 '+W+' '+H+'">'+
       '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="0">'+
-        '<stop offset="0%" stop-color="#7C5CFF"/><stop offset="100%" stop-color="#35D6C4"/></linearGradient>'+
+        '<stop offset="0%" stop-color="#3E6AE1"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient>'+
         '<linearGradient id="ar" x1="0" y1="0" x2="0" y2="1">'+
-        '<stop offset="0%" stop-color="#7C5CFF" stop-opacity=".30"/><stop offset="100%" stop-color="#35D6C4" stop-opacity="0"/></linearGradient></defs>'+
+        '<stop offset="0%" stop-color="#3E6AE1" stop-opacity=".30"/><stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient></defs>'+
       grid+
-      '<path d="'+bline+'" fill="none" stroke="#4A5068" stroke-width="1.6" stroke-dasharray="5 4"/>'+
+      '<path d="'+bline+'" fill="none" stroke="#3A3A3A" stroke-width="1.6" stroke-dasharray="5 4"/>'+
       '<path d="'+line+' L'+xv(p.pts[p.pts.length-1].i)+','+yv(0)+' L'+xv(p.pts[0].i)+','+yv(0)+' Z" fill="url(#ar)"/>'+
-      '<path d="'+line+'" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round"/>'+
+      '<path class="draw" d="'+line+'" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round"/>'+
       dline+dots+xlab+'</svg></div>'+
 
   '<div class="tiles">'+
-    tile("◇","#7C5CFF","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
-    tile("✓","#34D399","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
-    tile("↺","#4C8DFF","Minimums due",money(t.min),"every month, non-auto")+
-    tile("↑","#FBBF24","Extra payment",money(extraThisMonth()),thisMonthKey()+
+    tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
+    tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
+    tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
+    tile("↑","#F59E0B","Extra payment",money(extraThisMonth()),thisMonthKey()+
       (new Date()<DIS_START?" · "+money(EXTRA_BASE+DIS_TO_DEBT)+" from "+MONLBL[DIS_START.getMonth()]
        :" · incl. "+money(DIS_TO_DEBT)+" of the benefit"))+
   '</div>'+
@@ -684,25 +707,23 @@ function viewNow(){
   var before=0;if(pi>-1)fc.slice(0,pi+1).forEach(function(d){
     before+=d.drip+d.items.filter(function(x){return x.amt<0;}).reduce(function(s,x){return s-x.amt;},0);});
   var stale=state.cash.updated&&(Date.now()-new Date(state.cash.updated).getTime())/864e5>3;
-  var overBudget=budgetLeft()<0;
+  var overBudget=false;
   var t=totals();
 
-  var carried=0;
   var bills=fc.slice(0,HORIZON).map(function(d){
-    carried+=d.drip;
-    if(!d.items.length)return "";
-    var neg=d.bal<0, dripShown=carried; carried=0;
-    return '<div style="display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid var(--line);align-items:flex-start;'+(neg?'background:rgba(255,94,108,.07)':'')+'">'+
-     '<div style="width:74px;flex-shrink:0;font-size:11px;font-weight:700;color:'+(neg?"var(--red)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
-     '<div style="flex:1;min-width:0">'+d.items.map(function(it){
-       return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:1px 0">'+
-        '<span style="'+(it.amt>0?"font-weight:700;color:var(--green)":"color:var(--tx)")+'">'+esc(it.name)+'</span>'+
-        '<span class="num" style="white-space:nowrap;color:'+(it.amt>0?"var(--green)":"var(--mut)")+'">'+(it.amt>0?"+":"−")+money(it.amt)+'</span></div>';}).join("")+
-       (dripShown>=0.5?'<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:1px 0;font-style:italic">'+
-        '<span style="color:var(--dim)">Everyday spending</span>'+
-        '<span class="num" style="white-space:nowrap;color:var(--dim)">−'+money(dripShown)+'</span></div>':"")+'</div>'+
-     '<div class="num" style="width:86px;flex-shrink:0;text-align:right;font-size:13px;font-weight:700;color:'+(neg?"var(--red)":"var(--tx)")+'">'+signed(d.bal)+'</div></div>';})
-    .filter(function(x){return x;}).slice(0,40).join("");
+    var neg=d.bal<0,drip=d.drip,catchup=drip<VAR_DAILY-0.5;
+    function line(name,amt,kind){ /* kind: "in", "out", "drip" */
+      var col=kind==="in"?"var(--green)":kind==="drip"?"var(--dim)":"var(--tx)",w=kind==="in"?"700":"400",it=kind==="drip"?"font-style:italic;":"";
+      return '<div style="display:grid;grid-template-columns:1fr 72px;gap:8px;font-size:12.5px;line-height:20px;'+it+'">'+
+        '<span style="color:'+col+';font-weight:'+w+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'+
+        '<span class="num" style="text-align:right;color:'+col+'">'+(kind==="in"?"+":"\u2212")+money(amt)+'</span></div>';}
+    var lines=d.items.map(function(it){return line(esc(it.name),it.amt,it.amt>0?"in":"out");}).join("")+
+              line("Everyday spending"+(catchup?" \u00b7 catch-up":""),drip,"drip");
+    return '<div style="display:grid;grid-template-columns:74px 1fr 78px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);align-items:start;'+(neg?'background:rgba(227,25,55,.08)':'')+'">'+
+     '<div style="font-size:11.5px;line-height:20px;font-weight:'+(d.items.length?700:400)+';color:'+(neg?"var(--red)":d.items.length?"var(--mut)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
+     '<div style="min-width:0">'+lines+'</div>'+
+     '<div class="num" style="text-align:right;font-size:13px;line-height:20px;font-weight:700;color:'+(neg?"var(--red)":"var(--tx)")+'">'+(neg?"\u2212":"")+money(d.bal)+'</div></div>';})
+    .join("");
 
   return '<div class="grid">'+
   '<div class="card pad">'+
@@ -733,7 +754,7 @@ function viewNow(){
       (since>0?lineRow("Logged since you typed it",-since):"")+
       (inFlow>0?lineRow("Pay landing before then",inFlow):"")+
       lineRow("Bills that draft before then",-outFlow)+
-      lineRow("Everyday spending still to come · "+money(currentDrip())+"/day",-dripTot,true)+
+      lineRow("Everyday spending · $"+VAR_DAILY+" a day after today",-dripTot,true)+
       '<div style="display:flex;justify-content:space-between;gap:10px;padding:11px 0 0;margin-top:6px;border-top:1px solid var(--line2);font-size:13.5px;font-weight:800">'+
         '<span>Left on '+(tr.date?fmtDate(tr.date):"the thinnest day")+'</span>'+
         '<span class="num" style="color:'+(tr.bal<0?"var(--red)":"var(--green)")+'">'+signed(tr.bal)+'</span></div></div>'+
@@ -751,22 +772,21 @@ function viewNow(){
     '<div id="spendout"></div></div>'+
 
   '<div class="tiles">'+
-    tile("◉","#7C5CFF","Need today",money(need),short>0?money(short)+" more than you have":money(cushion)+" of cushion")+
-    tile("→","#4C8DFF","Before next payday",money(before),pi>-1?"lands "+fmtDate(fc[pi].date):"none in range")+
-    tile("▽","#FF5E6C","Thinnest day",tr.date?fmtDate(tr.date):"—","hits "+signed(tr.bal),tr.bal<0?"var(--red)":"var(--tx)")+
+    tile("◉","#3E6AE1","Need today",money(need),short>0?money(short)+" more than you have":money(cushion)+" of cushion")+
+    tile("→","#3E6AE1","Before next payday",money(before),pi>-1?"lands "+fmtDate(fc[pi].date):"none in range")+
+    tile("▽","#E31937","Thinnest day",tr.date?fmtDate(tr.date):"—","hits "+signed(tr.bal),tr.bal<0?"var(--red)":"var(--tx)")+
   '</div>'+
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
     '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next two months</div>'+
-    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Everyday spending still to come is '+money(currentDrip())+'/day, shown on each row. What you\'ve already logged came off the balance above.</div></div>'+
+    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div></div>'+
     bills+'</div></div>';
 }
 
 /* ---------------- SPENDING ---------------- */
 function viewSpend(){
-  var spent=spendThisMonth(),left=budgetLeft(),over=left<0;
-  var pct=Math.max(0,Math.min(100,spent/VAR_BUDGET*100));
-  var perDay=Math.max(0,left)/daysLeftInMonth();
+  var spent=spendThisMonth(),left=todayLeft(),over=left<0,pace=paceDiff();
+  var pct=Math.max(0,Math.min(100,spentToday()/VAR_DAILY*100));
   var R=52,C=2*Math.PI*R,off=C*(1-pct/100);
   var k=monthKey(new Date());
   var mine=(state.spend||[]).filter(function(e){return e.date.slice(0,7)===k;})
@@ -782,17 +802,18 @@ function viewSpend(){
   return '<div class="grid">'+
   '<div class="hero" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">'+
     '<svg viewBox="0 0 130 130" style="width:130px;flex-shrink:0">'+
-      '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="#1B1E2A" stroke-width="13"/>'+
+      '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="#1A1A1A" stroke-width="13"/>'+
       '<circle cx="65" cy="65" r="'+R+'" fill="none" stroke="'+(over?"var(--red)":"url(#sg)")+'" stroke-width="13" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 65 65)"/>'+
-      '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#7C5CFF"/><stop offset="100%" stop-color="#35D6C4"/></linearGradient></defs>'+
-      '<text x="65" y="63" text-anchor="middle" font-size="21" font-weight="800" fill="#E9EBF3" font-family="var(--mono)">'+Math.round(pct)+'%</text>'+
-      '<text x="65" y="80" text-anchor="middle" font-size="9" fill="#5C6379">used</text></svg>'+
+      '<defs><linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#3E6AE1"/><stop offset="100%" stop-color="#FFFFFF"/></linearGradient></defs>'+
+      '<text x="65" y="63" text-anchor="middle" font-size="21" font-weight="800" fill="#F4F4F4" font-family="var(--mono)">'+Math.round(pct)+'%</text>'+
+      '<text x="65" y="80" text-anchor="middle" font-size="9" fill="#6E6E6E">used</text></svg>'+
     '<div style="flex:1;min-width:170px">'+
-      '<div class="eyebrow">Groceries, gas, everything unplanned</div>'+
+      '<div class="eyebrow">Today · $'+VAR_DAILY+' a day for groceries, gas, everything unplanned</div>'+
       '<div class="num big" style="margin:7px 0 4px;color:'+(over?"var(--red)":"var(--green)")+'">'+(over?"−"+money(left):money(left))+'</div>'+
-      '<div class="note">'+(over?"over":"left")+' of '+money(VAR_BUDGET)+' this month · '+money(spent)+' spent</div>'+
-      '<div class="note" style="margin-top:8px;color:var(--mut)">'+(over?"The pot is gone. Nothing further is reserved — anything else this month comes out of your cushion as you log it."
-        :"<b>"+money(currentDrip())+"/day</b> reserved for the "+daysAheadInMonth()+" days after today")+'</div></div></div>'+
+      '<div class="note">'+(over?"over today’s $"+VAR_DAILY:"left today")+' · '+money(spentToday())+' spent today · '+money(spent)+' this month</div>'+
+      '<div class="note" style="margin-top:8px;color:var(--mut)">'+(pace>=0?"<b style=\"color:var(--green)\">"+money(pace)+" under</b> pace for the month so far":"<b style=\"color:var(--red)\">"+money(-pace)+" over</b> pace for the month so far")+
+        (pace>=0?' · $'+VAR_DAILY+' is reserved for each of the '+daysAheadInMonth()+' days after today; what you don’t spend today stays in your balance.'
+                :' · to get the month back to $'+VAR_DAILY+' a day, the '+daysAheadInMonth()+' days after today are <b>'+money(currentDrip())+' each</b>.')+'</div></div></div>'+
 
   '<div class="card pad"><div class="eyebrow">Log a purchase</div>'+
     '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap;align-items:center">'+
@@ -871,7 +892,7 @@ function viewMonth(){
     pays+='<line x1="'+xv(d)+'" x2="'+xv(d)+'" y1="'+PT+'" y2="'+(H-PB)+'" stroke="rgba(52,211,153,.4)" stroke-dasharray="3 3"/>'+
      '<text x="'+xv(d)+'" y="'+(PT+9)+'" text-anchor="middle" font-size="9" fill="var(--green)" font-weight="700">PAYDAY</text>';});
   var xl="";[1,5,10,15,20,25,30].forEach(function(d){
-    xl+='<text x="'+xv(d)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="#5C6379" font-family="var(--mono)">'+d+'</text>';});
+    xl+='<text x="'+xv(d)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="#6E6E6E" font-family="var(--mono)">'+d+'</text>';});
   var rows=tr.map(function(t){
     return '<tr><td class="num" style="width:40px;color:var(--dim)">'+t.day+'</td>'+
      '<td style="'+(t.amt>0?"font-weight:700;color:var(--green)":"")+'">'+esc(t.name)+'</td>'+
@@ -886,15 +907,15 @@ function viewMonth(){
      '<p class="note" style="padding:6px 5px 10px;max-width:620px">Every account drafts from this one account. The line starts at zero on the 1st — wherever it dips, that much has to already be there. '+
        (t.paid?'<b>'+money(t.freed)+'/mo</b> of drafts have been removed because those accounts are paid off.':'')+'</p>'+
      '<svg viewBox="0 0 '+W+' '+H+'">'+
-       '<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF5E6C" stop-opacity=".26"/><stop offset="100%" stop-color="#FF5E6C" stop-opacity="0"/></linearGradient></defs>'+
+       '<defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E31937" stop-opacity=".26"/><stop offset="100%" stop-color="#E31937" stop-opacity="0"/></linearGradient></defs>'+
        '<line x1="'+PL+'" x2="'+(W-14)+'" y1="'+yv(0)+'" y2="'+yv(0)+'" stroke="rgba(255,255,255,.18)"/>'+
-       '<text x="'+(PL-8)+'" y="'+(yv(0)+4)+'" text-anchor="end" font-size="10" fill="#5C6379" font-family="var(--mono)">0</text>'+
+       '<text x="'+(PL-8)+'" y="'+(yv(0)+4)+'" text-anchor="end" font-size="10" fill="#6E6E6E" font-family="var(--mono)">0</text>'+
        '<path d="'+path+' L'+xv(30)+','+yv(0)+' Z" fill="url(#rg)"/>'+
        '<path d="'+path+'" fill="none" stroke="var(--red)" stroke-width="2.3" stroke-linecap="round"/>'+marks+pays+xl+'</svg></div>'+
    '<div class="tiles">'+
-     tile("▦","#4C8DFF","Leaves every month",money(ev.filter(function(f){return f[2]<0;}).reduce(function(s,f){return s-f[2];},0)),"bills, minimums and the extra")+
-     tile("▲","#34D399","Lands every month",money(ev.filter(function(f){return f[2]>0;}).reduce(function(s,f){return s+f[2];},0)),"pay"+(new Date()>=DIS_START?" and disability":""))+
-     tile("◈","#7C5CFF","Left at month end",signed(net),net<0?"short before everyday spending":"before everyday spending",net<0?"var(--red)":"var(--green)")+
+     tile("▦","#3E6AE1","Leaves every month",money(ev.filter(function(f){return f[2]<0;}).reduce(function(s,f){return s-f[2];},0)),"bills, minimums and the extra")+
+     tile("▲","#22C55E","Lands every month",money(ev.filter(function(f){return f[2]>0;}).reduce(function(s,f){return s+f[2];},0)),"pay"+(new Date()>=DIS_START?" and disability":""))+
+     tile("◈","#3E6AE1","Left at month end",signed(net),net<0?"short before everyday spending":"before everyday spending",net<0?"var(--red)":"var(--green)")+
    '</div>'+
    '<div class="card pad" style="border-left:3px solid var(--amber)">'+
      '<div class="eyebrow">Two calls that fix most of this</div>'+
@@ -909,8 +930,11 @@ function viewMonth(){
 /* ---------------- SYNC ---------------- */
 function viewSync(){
   return '<div class="grid">'+
-   '<div class="card pad"><div class="eyebrow">Send your numbers to another phone</div>'+
-     '<p style="font-size:13px;line-height:1.6;margin:9px 0 15px;color:var(--tx)">This copy lives on this device only. Copy the link below and text it over — opening it loads whichever set of numbers was updated more recently.</p>'+
+   '<div class="hero" style="border-left:3px solid var(--green)"><div class="eyebrow">Where your numbers live</div>'+
+     '<div class="syncstat" style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin:8px 0 6px">Connecting\u2026</div>'+
+     '<p style="font-size:13px;line-height:1.6;margin:0;color:var(--tx)">Type a balance here and every phone or computer with this link has it within seconds. Anyone with the link can change the numbers too.</p></div>'+
+   '<div class="card pad"><div class="eyebrow">Snapshot link</div>'+
+     '<p style="font-size:13px;line-height:1.6;margin:9px 0 15px;color:var(--tx)">A frozen copy of today\'s numbers, for keeping somewhere safe. Not needed to move between devices any more.</p>'+
      '<button class="btn" data-act="copylink">Copy sync link</button>'+
      '<button class="btn ghost" data-act="showlink" style="margin-left:8px;padding:11px 14px">Show the link</button>'+
      '<div id="linkbox" style="margin-top:13px"></div></div>'+
@@ -919,8 +943,8 @@ function viewSync(){
        '<li>Open this page in Safari</li><li>Tap Share</li><li>Choose <b>Add to Home Screen</b></li></ol>'+
      '<p class="note" style="margin-top:11px">Opens in its own window, and your numbers stay saved between visits.</p></div>'+
    '<div class="card pad"><div class="eyebrow">Start over</div>'+
-     '<p class="note" style="margin:9px 0 13px">Resets every balance on this device to the plan\'s starting numbers. Cannot be undone.</p>'+
-     '<button class="btn ghost" data-act="reset" style="padding:10px 15px">Reset this device</button></div></div>';
+     '<p class="note" style="margin:9px 0 13px">Resets every balance, on every device, to the plan\'s starting numbers. Cannot be undone.</p>'+
+     '<button class="btn ghost" data-act="reset" style="padding:10px 15px">Reset every balance</button></div></div>';
 }
 
 /* ---------------- CREDIT ---------------- */
@@ -976,10 +1000,10 @@ function viewCredit(){
       (by30?'On this plan the overall number is under 30% by <b>'+by30+'</b>':'')+(by10?' and under 10% by <b>'+by10+'</b>.':'.')+'</div></div>'+
 
   '<div class="tiles">'+
-    tile("\u25CE","#FF5E6C","Cards over 30%",over30+" of "+live.length,money(costToThreshold(.3))+" clears all of them")+
-    tile("\u25CB","#FBBF24","Under 10% everywhere",money(costToThreshold(.1)),"the point where cards stop hurting")+
-    tile("\u2713","#34D399","Open with $0 on them",keep.length,money(keepTotal)+" of limit \u2014 keep every one")+
-    tile("\u2191","#7C5CFF","Extra goes to",tg?esc(tg.name):"\u2014",tg&&isCard(tg)?Math.round(util(tg)*100)+"% full \u2014 fullest card first":"loans, once the cards are down")+
+    tile("\u25CE","#E31937","Cards over 30%",over30+" of "+live.length,money(costToThreshold(.3))+" clears all of them")+
+    tile("\u25CB","#F59E0B","Under 10% everywhere",money(costToThreshold(.1)),"the point where cards stop hurting")+
+    tile("\u2713","#22C55E","Open with $0 on them",keep.length,money(keepTotal)+" of limit \u2014 keep every one")+
+    tile("\u2191","#3E6AE1","Extra goes to",tg?esc(tg.name):"\u2014",tg&&isCard(tg)?Math.round(util(tg)*100)+"% full \u2014 fullest card first":"loans, once the cards are down")+
   '</div>'+
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
@@ -1008,11 +1032,326 @@ function viewCredit(){
   '</div>';
 }
 
+/* ---------------- WINDFALL ----------------
+   A lump sum — bonus, tax refund, a car sold, back pay. Where it goes is
+   decided by what moves the credit score most per dollar, then by the
+   payoff. The order:
+     0. Plug any hole in the two-month cash forecast. A late payment costs
+        more score than any payoff gains, so cash comes first.
+     1. Every card under 90%. A maxed card is the worst thing on the file
+        after the late itself, and it is what triggered the limit cuts.
+     2. Every card under 50%, then 30%, then 10%, then to zero. Inside each
+        tier the card that is cheapest to get over the line goes first — more
+        cards cross per dollar, and small cards die outright, which drops the
+        count of accounts carrying a balance and frees their draft.
+     3. Whatever is left goes to the loans and plans by interest bleed. */
+var windTest="";
+var CASH_FLOOR=300, CHEAP_KILL=500;
+var TIERS=[[.90,"under 90%","a maxed card reads worst"],
+  [.50,"under 50%","stops reading as maxed"],
+  [.30,"under 30%","the line every model watches"],
+  [.10,"under 10%","where a card stops hurting"],
+  [0,"to zero","one less account with a balance"]];
+function utilLabel(b,limit){return limit>0?Math.round(b/limit*100)+"%":"";}
+function windfallPlan(W){
+  W=Math.max(0,Math.round(Number(W)||0));
+  var r={amount:W,reserve:0,trough:null,items:[],leftover:0};
+  if(W<=0)return r;
+  var bal={};planAccounts().forEach(function(x){bal[x.name]=x.current;});
+  var pool=W;
+  /* keep the two-month forecast at least CASH_FLOOR above zero */
+  if(state.cash.updated){var t=troughOf(workingBalance()).tr;r.trough=t;
+    if(t.bal<CASH_FLOOR){r.reserve=Math.min(pool,Math.ceil((CASH_FLOOR-t.bal)/10)*10);pool-=r.reserve;}}
+  var order=[],byName={};
+  function give(x,amt,ti){amt=Math.round(Math.min(amt,pool,bal[x.name]));if(amt<=0)return;
+    var it=byName[x.name];
+    if(!it){it=byName[x.name]={name:x.name,amt:0,from:bal[x.name],kind:x.kind,limit:x.limit,apr:x.apr,min:x.min,tier:ti};order.push(it);}
+    it.amt+=amt;it.tier=ti;bal[x.name]-=amt;pool-=amt;it.to=bal[x.name];}
+  var cards=planAccounts().filter(function(x){return isCard(x)&&x.current>0;});
+  for(var ti=0;ti<TIERS.length&&pool>0;ti++){
+    var f=TIERS[ti][0];
+    /* once nothing is maxed, a small card is worth killing outright: a zero
+       balance beats a lower one, and its draft comes back every month */
+    if(ti===1)cards.filter(function(x){return bal[x.name]>0&&bal[x.name]<=CHEAP_KILL;})
+      .sort(function(a,b){return bal[a.name]-bal[b.name];}).forEach(function(x){give(x,bal[x.name],4);});
+    cards.map(function(x){var target=f>0?Math.floor(x.limit*f)-1:0;return {x:x,gap:bal[x.name]-target};})
+      .filter(function(n){return n.gap>0;}).sort(function(a,b){return a.gap-b.gap;})
+      .forEach(function(n){give(n.x,n.gap,ti);});
+  }
+  /* a lump sum saves interest at the account's rate, whatever its size — so
+     loans and plans go by APR, highest first; a whole payoff also frees its draft */
+  if(pool>0){planAccounts().filter(function(x){return !isCard(x)&&x.current>0;})
+    .sort(function(p,q){return q.apr-p.apr||p.current-q.current;})
+    .forEach(function(x){if(pool>0)give(x,bal[x.name],-1);});}
+  /* label each card by the line it actually crossed, not the one it was aiming at */
+  order.forEach(function(it){if(it.limit<=0)return;it.tier=-2;
+    for(var k=0;k<TIERS.length;k++){var f=TIERS[k][0];if(it.to<=(f>0?Math.floor(it.limit*f)-1:0))it.tier=k;}});
+  r.items=order;r.leftover=pool;
+
+  /* before and after */
+  var before=plan(),L=cardLimitTotal();
+  var list=planAccounts().map(function(x){return {name:x.name,bal:bal[x.name],apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};});
+  var after=simulate(list,function(d){return BASE_MIN+extraFor(d);},420);
+  var cb=0,ca=0,o30b=0,o30a=0;
+  cards.forEach(function(x){cb+=x.current;ca+=bal[x.name];if(util(x)>=.3)o30b++;if(bal[x.name]/x.limit>=.3)o30a++;});
+  var zeroed=order.filter(function(it){return it.to<=0;});
+  r.before={free:before.done?keyFromMi(before.zeroIdx):"—",months:before.months,interest:before.interest,util:L?cb/L:0,over30:o30b};
+  r.after={free:after.done?keyFromMi(after.zeroIdx):"—",months:after.months,interest:after.interest,util:L?ca/L:0,over30:o30a,
+    freed:zeroed.reduce(function(s,it){return s+it.min;},0),zeroed:zeroed.length};
+
+  /* the honest alternative: the same money by interest bleed alone */
+  var b2={};planAccounts().forEach(function(x){b2[x.name]=x.current;});
+  var p2=W-r.reserve;
+  planAccounts().filter(function(x){return x.current>0;})
+    .sort(function(p,q){return q.current*q.apr-p.current*p.apr;})
+    .forEach(function(x){if(p2<=0)return;var a=Math.min(p2,b2[x.name]);b2[x.name]-=a;p2-=a;});
+  var alt=simulate(planAccounts().map(function(x){return {name:x.name,bal:b2[x.name],apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};}),
+    function(d){return BASE_MIN+extraFor(d);},420);
+  var cu=0;cards.forEach(function(x){cu+=b2[x.name];});
+  r.alt={interest:alt.interest,util:L?cu/L:0,free:alt.done?keyFromMi(alt.zeroIdx):"—",
+    first:planAccounts().filter(function(x){return x.current>0;}).sort(function(p,q){return q.current*q.apr-p.current*p.apr;})[0]};
+  return r;
+}
+function windRows(r){
+  var rows=r.items.map(function(it,i){
+    var card=it.limit>0;
+    var why=it.tier>=0?TIERS[it.tier][1]+" \u2014 "+TIERS[it.tier][2]:it.tier===-2?"toward under 90% \u2014 ran out here":"highest rate left \u00b7 "+it.apr.toFixed(1)+"%";
+    if(it.to<=0)why="paid off"+(card?" \u2014 keep the card open":"")+" \u00b7 frees "+money(it.min)+"/mo";
+    return '<div style="display:flex;gap:11px;padding:12px 16px;border-bottom:1px solid var(--line);align-items:center">'+
+      '<div class="num" style="width:20px;flex-shrink:0;font-size:11px;color:var(--dim)">'+(i+1)+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:700;font-size:13px">'+esc(it.name)+'</div>'+
+        '<div class="note" style="font-size:10.5px">'+
+          (card?'<span class="num">'+utilLabel(it.from,it.limit)+' \u2192 <b style="color:'+utilCol(it.to/it.limit)+'">'+utilLabel(it.to,it.limit)+'</b></span> \u00b7 ':
+                '<span class="num">'+money(it.from)+' \u2192 '+money(it.to)+'</span> \u00b7 ')+why+'</div></div>'+
+      '<div class="num" style="font-size:15px;font-weight:800;color:var(--green)">'+money(it.amt)+'</div></div>';}).join("");
+  return rows;
+}
+function windOut(){
+  var W=Math.round(Number(windTest)||0);
+  if(W<=0)return '<div class="card pad" style="border-left:3px solid var(--violet)">'+
+    '<div class="eyebrow">How it decides</div>'+
+    '<ol style="font-size:13px;line-height:1.7;padding-left:20px;margin:9px 0 0">'+
+      '<li><b>Cash first.</b> The two-month forecast is kept at least '+money(CASH_FLOOR)+' above zero before a dollar goes to debt. A late payment costs more score than any payoff buys back.</li>'+
+      '<li><b>Every card under 90%.</b> A maxed card is the worst thing on the file after the late itself \u2014 it is what set off the limit cuts.</li>'+
+      '<li><b>Small cards paid off outright.</b> Anything under '+money(CHEAP_KILL)+' goes to zero: one less account with a balance, and its draft comes back every month.</li>'+
+      '<li><b>Then every card under 50%, 30%, 10%, and to zero,</b> cheapest to cross first, so more cards clear per dollar.</li>'+
+      '<li><b>Then loans and plans, highest rate first.</b> A lump sum saves interest at the rate, not the balance, so the 36% Affirm and Klarna plans come before the bigger Upstart loans.</li></ol>'+
+    '<p class="note" style="margin-top:11px">Type an amount above and it lays out exactly where each dollar goes and what it does to the debt-free date, the interest, and utilisation.</p></div>';
+  var r=windfallPlan(W),a=r.after,b=r.before;
+  var saved=Math.max(0,b.interest-a.interest),mo=Math.max(0,b.months-a.months);
+  var reserve=r.reserve>0?'<div class="card pad" style="border-left:3px solid var(--amber)">'+
+    '<div class="eyebrow">Keep in checking</div>'+
+    '<div class="num" style="font-size:26px;font-weight:800;color:var(--amber);margin:6px 0 4px">'+money(r.reserve)+'</div>'+
+    '<div class="note">The forecast bottoms out at <b>'+signed(r.trough.bal)+'</b> on '+fmtDate(r.trough.date)+'. This keeps it at least '+money(CASH_FLOOR)+' above zero. Nothing below is worth a late payment.</div></div>':'';
+  var altNote='';
+  if(r.alt&&r.alt.first){
+    var d=Math.round(a.interest-r.alt.interest);
+    altNote='<div class="card pad"><div class="eyebrow">The other way, for the record</div>'+
+      '<p style="font-size:13px;line-height:1.6;margin:9px 0 0">Sending the same money purely by interest bleed \u2014 all of it at <b>'+esc(r.alt.first.name)+'</b> first \u2014 '+
+      (d>0?'saves about <b class="num">'+money(d)+'</b> more interest over the whole payoff':'saves no more interest')+
+      ', lands debt-free <b>'+r.alt.free+'</b>, and leaves utilisation at <b class="num">'+Math.round(r.alt.util*100)+'%</b> instead of <b class="num">'+Math.round(a.util*100)+'%</b>. '+
+      'The credit-first order is the one to use: the cards report every month, the loans barely register, and the interest gap is small because the card rates are just as high.</p></div>';
+  }
+  var leftover=r.leftover>0?'<div class="card pad" style="border-left:3px solid var(--green)"><div class="eyebrow">Left over</div>'+
+    '<div class="num" style="font-size:22px;font-weight:800;margin:6px 0 4px;color:var(--green)">'+money(r.leftover)+'</div>'+
+    '<div class="note">Everything in the plan is paid. Put it toward the cars or keep it as a cushion.</div></div>':'';
+  return reserve+
+   '<div class="tiles">'+
+    tile("\u25C8","#22C55E","Debt-free",a.free,(mo?mo+" month"+(mo>1?"s":"")+" sooner \u00b7 was "+b.free:"same month \u00b7 was "+b.free))+
+    tile("\u2193","#3E6AE1","Interest saved",money(saved),"across the rest of the payoff")+
+    tile("\u25CE","#E31937","Utilisation",Math.round(b.util*100)+"% \u2192 "+Math.round(a.util*100)+"%",a.over30+" card"+(a.over30===1?"":"s")+" over 30%, was "+b.over30)+
+    tile("\u2713","#F59E0B","Paid off outright",a.zeroed,money(a.freed)+"/mo of drafts freed")+
+   '</div>'+
+   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
+     '<div style="font-size:14px;font-weight:700">Send it here, in this order</div>'+
+     '<div class="note">Pay each card <b>before its statement closes</b>, not just before the due date \u2014 the statement balance is the one that gets reported. Then tap the button so the plan knows.</div></div>'+
+     windRows(r)+
+     '<div style="padding:14px 16px"><button class="btn" data-act="applywind">I sent these \u2014 update the balances</button></div></div>'+
+   altNote+leftover;
+}
+function paintWind(){var e=document.getElementById("windout");if(e)e.innerHTML=windOut();}
+function viewWind(){
+  var chips=[500,1000,2500,5000].map(function(v){
+    return '<button class="btn ghost" data-wind="'+v+'" style="padding:7px 11px">'+money(v)+'</button>';}).join("");
+  return '<div class="grid">'+
+   '<div class="hero" style="border-left:3px solid var(--violet)">'+
+     '<div class="eyebrow">Extra cash landed \u2014 where does it go?</div>'+
+     '<div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap;align-items:center">'+
+       '<span class="num" style="font-size:19px;color:var(--dim)">$</span>'+
+       '<input type="number" inputmode="decimal" id="windin" placeholder="0" value="'+esc(windTest)+'" style="width:130px;font-size:20px" aria-label="Windfall amount">'+chips+'</div>'+
+     '<div class="note" style="margin-top:11px">A bonus, a refund, back pay, something sold. Nothing changes until you tap the button at the bottom of the list.</div></div>'+
+   '<div id="windout" style="display:grid;gap:14px">'+windOut()+'</div></div>';
+}
+
+/* ---------------- SHARED NUMBERS (GitHub Pages build) ----------------
+   Everyone who opens this link sees the same balances. They live in one
+   GitHub gist; this page reads it on open and every few seconds, and writes
+   it whenever a number changes. The newer revision always wins, so a phone
+   that was offline with stale numbers never overwrites newer ones. The copy
+   in this browser is only a cache so the page opens instantly offline. */
+var GIST_ID="aaf7fade2a9850e379117a973aae29b4";
+var _gk=["==wVap3bnJDS2xkYtN","GVzAjZ0NDTxE0c1NjQ","290SpFlZZZ2MUp0Xvh2Z"];
+function gistKey(){return atob(_gk.join("").split("").reverse().join(""));}
+var GS={mode:"boot",at:0,pushT:null,pollT:null,etag:null};
+function gistHeaders(){return {"Authorization":"Bearer "+gistKey(),"Accept":"application/vnd.github+json","Content-Type":"application/json"};}
+function gsPaint(){var t=GS.mode==="synced"?"Shared \u2014 everyone with the link sees these numbers":GS.mode==="saving"?"Saving\u2026":GS.mode==="boot"?"Connecting\u2026":"Can\u2019t reach the server \u2014 saved here for now",
+  c=GS.mode==="synced"?"var(--green)":GS.mode==="error"?"var(--amber)":"var(--dim)";
+  var els=document.querySelectorAll(".syncstat");for(var i=0;i<els.length;i++){els[i].textContent=t;els[i].style.color=c;}}
+function gsSet(m){GS.mode=m;if(m==="synced")GS.at=Date.now();gsPaint();}
+function gsPush(){
+  if(!GIST_ID||GIST_ID.slice(0,2)==="__")return;
+  var body=JSON.stringify({files:{"state.json":{content:JSON.stringify(state)}}});
+  fetch("https://api.github.com/gists/"+GIST_ID,{method:"PATCH",headers:gistHeaders(),body:body})
+    .then(function(r){if(!r.ok)throw 0;gsSet("synced");},function(){gsSet("error");});
+}
+function gsPull(){
+  if(!GIST_ID||GIST_ID.slice(0,2)==="__")return;
+  fetch("https://api.github.com/gists/"+GIST_ID+"?_="+Date.now(),{headers:gistHeaders(),cache:"no-store"})
+    .then(function(r){if(!r.ok)throw 0;return r.json();})
+    .then(function(g){
+      var f=g.files&&g.files["state.json"],d=null;
+      try{d=f&&f.content?JSON.parse(f.content):null;}catch(e){}
+      var rr=d?Number(d.rev)||0:0, lr=Number(state.rev)||0;
+      if(rr>lr){
+        state={accounts:Object.assign(defaults(),d.accounts||{}),cash:d.cash||{balance:0,updated:null},
+               history:d.history||[],spend:d.spend||[],rev:rr};
+        try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+        if(!document.activeElement||document.activeElement.tagName!=="INPUT")render();
+      } else if(rr<lr){gsPush();}
+      gsSet("synced");
+    },function(){gsSet("error");});
+}
+if(!PRIVATE){
+  var _saveLocal=save;
+  save=function(){state.rev=Date.now();_saveLocal();gsSet("saving");clearTimeout(GS.pushT);GS.pushT=setTimeout(gsPush,500);};
+  document.addEventListener("visibilitychange",function(){if(!document.hidden)gsPull();});
+  window.addEventListener("focus",gsPull);
+  setInterval(function(){if(!document.hidden)gsPull();},15000);
+}
+
+/* ---------------- WATCH IT HAPPEN ----------------
+   A replay of the plan from today's numbers: the month ticks forward, the
+   total counts down, the bar of accounts drains and each one goes green as
+   it dies. Pure display — driven by the same engine as everything else. */
+var RP={t:0,playing:false,raf:null,last:0,perMonth:900};
+function rpStop(){RP.playing=false;if(RP.raf)cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
+function rpFrame(now){
+  var p=plan(),n=p.pts.length-1,dt=Math.min(80,RP.last?now-RP.last:0);RP.last=now;
+  if(RP.paused){}
+  else if(RP.hold){if(now>=RP.hold){RP.hold=0;RP.t=0;}}
+  else{RP.t+=dt/RP.perMonth;if(RP.t>=n){RP.t=n;RP.hold=now+3000;}}
+  RP.playing=!RP.hold&&!RP.paused;RP.dt=dt;
+  var sc=document.getElementById("rp-scrub");if(sc&&document.activeElement!==sc)sc.value=RP.t;
+  rpPaint();
+  if(tab==="today")RP.raf=requestAnimationFrame(rpFrame);else{RP.raf=null;RP.last=0;}
+}
+function rpPlay(){RP.hold=0;RP.playing=true;if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
+function rpAt(t){var p=plan(),k=Math.floor(t),f=t-k,a=p.pts[Math.min(k,p.pts.length-1)],b=p.pts[Math.min(k+1,p.pts.length-1)],o={};
+  planAccounts().forEach(function(x){o[x.name]=(a.bal[x.name]||0)*(1-f)+(b.bal[x.name]||0)*f;});return o;}
+function rpPaint(){
+  var p=plan(),i0=p.pts[0].i,bal=rpAt(RP.t),tot=0,acc=planAccounts();
+  acc.forEach(function(x){tot+=bal[x.name];});
+  var m=document.getElementById("rp-month"),T=document.getElementById("rp-total"),kl=document.getElementById("rp-killed");
+  if(!m)return;
+  var k=Math.min(Math.floor(RP.t),p.pts.length-1);
+  m.textContent=keyFromMi(i0+k);T.textContent=money(tot);
+  rpDraw3d(RP.dt||0);
+  var dead=acc.filter(function(x){return x.current>0&&bal[x.name]<=0.5;}).sort(function(a,b){return (p.payoff[a.name]||"").localeCompare(p.payoff[b.name]||"");});
+  if(kl)kl.innerHTML=dead.map(function(x){return '<span class="pill" style="background:rgba(34,197,94,.14);color:var(--green);margin:0 6px 6px 0">\u2713 '+esc(x.name)+'</span>';}).join("");
+}
+function viewReplay(){
+  var p=plan();
+  return '<div class="card" style="padding:16px 12px 8px;text-align:center;overflow:hidden">'+
+     '<div class="eyebrow" id="rp-month">'+keyFromMi(p.pts[0].i)+'</div>'+
+     '<div class="num big" id="rp-total" style="font-size:40px;margin:4px 0 2px">'+money(p.pts[0].total)+'</div>'+
+     '<canvas id="rp-3d" style="width:100%;display:block;touch-action:pan-y"></canvas>'+
+     '<div style="display:flex;align-items:center;gap:10px;margin:6px 4px 0">'+
+       '<button class="btn ghost" id="rp-play" data-act="rpplay" style="padding:7px 11px;min-width:44px">'+(RP.paused?"\u25B6":"\u2016")+'</button>'+
+       '<input type="range" id="rp-scrub" min="0" max="'+(p.pts.length-1)+'" step="0.02" value="'+RP.t+'" style="flex:1;padding:0;background:none;border:0;accent-color:#fff;height:28px" aria-label="Scrub through the plan"></div>'+
+     '<div id="rp-killed" style="text-align:left;min-height:26px;margin-top:8px"></div></div>';
+}
+/* ---------------- 4D MODE ----------------
+   One line — the total — drawn as a glowing ribbon in three dimensions on
+   a thin floor grid, easing left and right so it never turns unreadable.
+   It draws itself as the months run, white at the start, green as it
+   reaches zero. */
+RP.done=false;RP.doneAt=0;RP.hold=0;
+function rpCanvas(){var c=document.getElementById("rp-3d");if(!c)return null;
+  var dpr=window.devicePixelRatio||1,w=c.clientWidth||320,h=Math.round(w*0.66);
+  if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);c.style.height=h+"px";}
+  return c;}
+function rpDraw3d(dt){
+  var c=rpCanvas();if(!c)return;var g=c.getContext("2d"),W=c.width,H=c.height,dpr=window.devicePixelRatio||1,now=performance.now();
+  g.clearRect(0,0,W,H);
+  var p=plan(),n0=p.pts.length-1,start=p.pts[0].total||1,t=RP.t,k=Math.min(Math.floor(t),n0),fr=t-k;
+  var th=0,cs=1,sn=0,tilt=-0.26,ct=Math.cos(tilt),st=Math.sin(tilt); /* straight on, looking slightly down onto the floor */
+  var f=W*1.25,dist=3.6,cy=H*0.8,SX=2.3,SY=1.2,SZ=0.5,CX=W*0.53;
+  function P(x,y,z){var rx=x*cs-z*sn,rz=x*sn+z*cs;var y2=y*ct-rz*st,z2=rz*ct+y*st;var s=f/(z2+dist);return {x:CX+rx*s,y:cy-y2*s,z:z2,s:s};}
+  function X(m){return -SX/2+m/n0*SX;}function Y(v){return v/start*SY;}
+  function tv(m){return p.pts[Math.min(m,n0)].total;}
+  var tot=tv(k)+(tv(Math.min(k+1,n0))-tv(k))*fr;
+  /* floor */
+  g.lineWidth=dpr;
+  for(var m=0;m<=n0;m++){var a=P(X(m),0,-SZ/2),b=P(X(m),0,SZ/2);g.strokeStyle="rgba(255,255,255,"+(m<=t?0.35:0.15)+")";g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();}
+  for(var z=-1;z<=1;z++){var a1=P(X(0),0,z*SZ/2),b1=P(X(n0),0,z*SZ/2);g.strokeStyle="rgba(255,255,255,.2)";g.beginPath();g.moveTo(a1.x,a1.y);g.lineTo(b1.x,b1.y);g.stroke();}
+  /* height guides at the start */
+  g.font=(9.5*dpr)+"px ui-monospace,Menlo,monospace";
+  for(var q=1;q<=3;q++){var v=start*q/3,a2=P(X(0),Y(v),-SZ/2),b2=P(X(0),Y(v),SZ/2);g.strokeStyle="rgba(255,255,255,.2)";g.beginPath();g.moveTo(a2.x,a2.y);g.lineTo(b2.x,b2.y);g.stroke();
+    var lab="$"+Math.round(v/1000)+"k",lw=g.measureText(lab).width||24*dpr;g.strokeStyle="rgba(255,255,255,.25)";g.beginPath();g.moveTo(6*dpr+lw+4*dpr,a2.y);g.lineTo(a2.x,a2.y);g.stroke();
+    g.fillStyle="#fff";g.textAlign="left";g.fillText(lab,6*dpr,a2.y+3.5*dpr);}
+  /* the path ahead, faint */
+  var pts=[];for(var m2=0;m2<=n0;m2++)pts.push(P(X(m2),Y(tv(m2)),0));
+  g.strokeStyle="rgba(255,255,255,.45)";g.lineWidth=2*dpr;g.setLineDash([5*dpr,5*dpr]);g.beginPath();pts.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();g.setLineDash([]);
+  /* the ribbon so far */
+  var head=P(X(t),Y(tot),0),drawn=pts.slice(0,k+1).concat([head]);
+  /* fill to the floor */
+  var floorEnd=P(X(t),0,0),floor0=P(X(0),0,0);
+  var fg=g.createLinearGradient(0,P(0,SY,0).y,0,floor0.y);fg.addColorStop(0,"rgba(255,255,255,.28)");fg.addColorStop(1,"rgba(255,255,255,0)");
+  g.fillStyle=fg;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.lineTo(floorEnd.x,floorEnd.y);g.lineTo(floor0.x,floor0.y);g.closePath();g.fill();
+  /* glow pass then the line, colour shifting white → green along it */
+  var lg=Math.abs(head.x-drawn[0].x)>1?g.createLinearGradient(drawn[0].x,0,head.x,0):null;if(lg){lg.addColorStop(0,"rgba(255,255,255,1)");lg.addColorStop(1,"rgba(34,197,94,1)");}else lg="#fff";
+  g.lineJoin="round";g.lineCap="round";
+  g.strokeStyle="rgba(120,220,160,.3)";g.lineWidth=12*dpr;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();
+  g.strokeStyle=lg;g.lineWidth=4.5*dpr;g.beginPath();drawn.forEach(function(q,i){i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y);});g.stroke();
+  /* month markers along the ribbon */
+  for(var m3=0;m3<=k;m3++){g.fillStyle="#fff";g.beginPath();g.arc(pts[m3].x,pts[m3].y,2.6*dpr,0,Math.PI*2);g.fill();}
+  /* milestones: who got paid off, at the month it happened */
+  var acc=planAccounts().filter(function(x){return x.current>0;}),byM={};
+  acc.forEach(function(x){var key=p.payoff[x.name];if(!key)return;for(var i=0;i<=n0;i++)if(keyFromMi(p.pts[i].i)===key){(byM[i]=byM[i]||[]).push(x.name);break;}});
+  var last=null;
+  Object.keys(byM).map(Number).sort(function(a,b){return a-b;}).forEach(function(m){
+    if(t<m-0.02)return;var q=pts[m],age=Math.min(1,(t-m+0.02)/0.4);last={m:m,age:age};
+    g.fillStyle="rgba(34,197,94,"+age.toFixed(2)+")";g.beginPath();g.arc(q.x,q.y,5*dpr,0,Math.PI*2);g.fill();
+    g.strokeStyle="rgba(34,197,94,"+(0.5*age).toFixed(2)+")";g.lineWidth=1.5*dpr;g.beginPath();g.arc(q.x,q.y,9*dpr,0,Math.PI*2);g.stroke();
+  });
+  if(last){var names=byM[last.m],fade=Math.max(0,Math.min(1,(t-last.m+0.02)/0.4)),LH=12*dpr;
+    g.font="700 "+(10*dpr)+"px -apple-system,Helvetica,sans-serif";g.textAlign="left";
+    var bx=Math.min(head.x+16*dpr,W-8*dpr-Math.max.apply(null,names.map(function(nm){return g.measureText("\u2713 "+nm).width||nm.length*6*dpr;})));
+    var by=Math.max(LH+4*dpr,head.y-8*dpr-(names.length-1)*LH);
+    names.forEach(function(nm,i){g.fillStyle="rgba(34,197,94,"+fade.toFixed(2)+")";g.fillText("\u2713 "+nm,bx,by+i*LH);});}
+  /* head */
+  var gl=g.createRadialGradient(head.x,head.y,0,head.x,head.y,16*dpr);gl.addColorStop(0,"rgba(34,197,94,.6)");gl.addColorStop(1,"rgba(34,197,94,0)");
+  g.fillStyle=gl;g.beginPath();g.arc(head.x,head.y,16*dpr,0,Math.PI*2);g.fill();
+  g.fillStyle="#fff";g.beginPath();g.arc(head.x,head.y,5.5*dpr,0,Math.PI*2);g.fill();
+  /* drop line from the head to the floor, and the month under it */
+  g.strokeStyle="rgba(255,255,255,.35)";g.lineWidth=dpr;g.setLineDash([2*dpr,3*dpr]);g.beginPath();g.moveTo(head.x,head.y);g.lineTo(floorEnd.x,floorEnd.y);g.stroke();g.setLineDash([]);
+  g.fillStyle="#fff";g.font="700 "+(10*dpr)+"px ui-monospace,Menlo,monospace";g.textAlign="center";g.fillText(keyFromMi(p.pts[k].i),floorEnd.x,floorEnd.y+14*dpr);
+  var l0=P(X(0),0,SZ/2),l1=P(X(n0),0,SZ/2);g.fillStyle="rgba(255,255,255,.75)";g.font=(9.5*dpr)+"px ui-monospace,Menlo,monospace";g.fillText(keyFromMi(p.pts[0].i),l0.x,l0.y+14*dpr);g.fillText(keyFromMi(p.pts[n0].i),l1.x,l1.y+14*dpr);
+  if(tot<=0.5){if(!RP.done){RP.done=true;RP.doneAt=now;}var age=Math.min(1,(now-RP.doneAt)/900);
+    g.fillStyle="rgba(34,197,94,"+age.toFixed(2)+")";g.font="800 "+(20*dpr)+"px -apple-system,Helvetica,sans-serif";g.textAlign="center";g.fillText("DEBT FREE",W/2,H*0.2);}
+  else RP.done=false;
+}
 /* ---------------- shell ---------------- */
-var TABS=[["descent","Descent","◈"],["now","Right Now","◉"],["spend","Spending","◐"],
-          ["accounts","Accounts","▤"],["credit","Credit","◎"],["month","The Month","▦"],["sync","Sync","⇄"]];
+var TABS=[["today","Today","◉"],["plan","Plan","◈"],["accounts","Accounts","▤"]];
+var FOLDS={wind:false,credit:false,spend:false,month:false,sync:false};
+function fold(id,title,sub,html){
+  return '<details class="fold" data-fold="'+id+'"'+(FOLDS[id]?' open':'')+'><summary>'+title+(sub?'<small>'+sub+'</small>':'')+'</summary><div class="body">'+html+'</div></details>';
+}
+document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.fold){FOLDS[d.dataset.fold]=d.open;
+}},true);
 function render(){
-  bust();
+  bust();if(RP.raf){cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
   document.getElementById("nav").innerHTML=TABS.map(function(x){
     return '<button data-tab="'+x[0]+'" data-on="'+(tab===x[0])+'"><span class="dot"></span>'+x[1]+'</button>';}).join("");
   document.getElementById("mnav").innerHTML=TABS.map(function(x){
@@ -1020,10 +1359,17 @@ function render(){
   var p=plan(),c=cars();
   document.getElementById("sidefree").textContent=p.done?keyFromMi(p.zeroIdx):"—";
   document.getElementById("sidecars").textContent=(c.done?"Cars "+keyFromMi(c.zeroIdx):"")+" · "+p.months+" mo left";
-  document.getElementById("view").innerHTML =
-    tab==="descent"?viewDescent():tab==="now"?viewNow():tab==="spend"?viewSpend():
-    tab==="accounts"?viewAccounts():tab==="credit"?viewCredit():tab==="month"?viewMonth():viewSync();
-  if(tab==="now")paintSpend();
+  var tg=targetAccount(),u=utilNow();
+  document.getElementById("view").innerHTML = '<div class="grid">'+(
+    tab==="today"? viewReplay()+viewNow()+fold("spend","Spending",(todayLeft()<0?"−"+money(todayLeft())+" over today":money(todayLeft())+" left today"),viewSpend()) :
+    tab==="plan"? viewDescent()+
+      fold("wind","Extra cash came in",(Number(windTest)>0?money(windTest):"where to send it"),viewWind())+
+
+      fold("credit","Credit",Math.round(u*100)+"% utilisation"+(tg?" \u00b7 target "+esc(tg.name):""),viewCredit()) :
+    viewAccounts()+fold("month","This month, day by day","every draft and paycheck",viewMonth())+
+      fold("sync","Sharing and reset","",viewSync()))+'</div>';
+  if(tab==="today")paintSpend();
+  if(tab==="today"){rpPaint();if(!RP.raf)RP.raf=requestAnimationFrame(rpFrame);}
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
@@ -1035,7 +1381,17 @@ document.addEventListener("click",function(e){
     state.spend=(state.spend||[]).filter(function(x){return x.id!==id;});save();render();return;}
   if(b.dataset.spend!=null){spendTest=b.dataset.spend==="0"?"":b.dataset.spend;
     var si=document.getElementById("spendin");if(si)si.value=spendTest;paintSpend();return;}
+  if(b.dataset.wind){windTest=b.dataset.wind;
+    var wi=document.getElementById("windin");if(wi)wi.value=windTest;paintWind();return;}
   var act=b.dataset.act;
+  if(act==="rpplay"){RP.paused=!RP.paused;if(!RP.paused){RP.hold=0;var pp=plan();if(RP.t>=pp.pts.length-1)RP.t=0;}b.textContent=RP.paused?"\u25B6":"\u2016";return;}
+  if(act==="applywind"){
+    var wp=windfallPlan(windTest);
+    if(!wp.items.length){toast("Nothing to apply");return;}
+    wp.items.forEach(function(it){state.accounts[it.name]=Math.max(0,Math.round(it.to));});
+    var n=wp.items.length,z=wp.after.zeroed;
+    windTest="";save();render();
+    toast(n+" balance"+(n>1?"s":"")+" updated"+(z?" · "+z+" paid off — keep the cards open":""));return;}
   if(act==="snapshot"){
     var d=new Date().toISOString().slice(0,10),tt=Math.round(totals().remaining);
     state.history=state.history.filter(function(h){return h.date!==d;}).concat([{date:d,total:tt}])
@@ -1060,12 +1416,15 @@ function showLink(u){var e=document.getElementById("linkbox");if(!e)return;
   e.innerHTML='<textarea readonly rows="4" style="width:100%;font-family:var(--mono);font-size:11px;text-align:left">'+esc(u)+'</textarea><div class="note" style="margin-top:6px">Select all and copy.</div>';
   var t=e.querySelector("textarea");t.focus();t.select();}
 document.addEventListener("input",function(e){
-  if(e.target&&e.target.id==="spendin"){spendTest=e.target.value;paintSpend();}});
+  if(e.target&&e.target.id==="spendin"){spendTest=e.target.value;paintSpend();}
+  if(e.target&&e.target.id==="windin"){windTest=e.target.value;paintWind();}
+  if(e.target&&e.target.id==="rp-scrub"){RP.paused=true;RP.hold=0;RP.t=Number(e.target.value)||0;var pb=document.getElementById("rp-play");if(pb)pb.textContent="\u25B6";rpPaint();}
+});
 document.addEventListener("change",function(e){
   var el=e.target;
   if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);save();render();}
   if(el.id==="cashin"){state.cash={balance:Math.round(Number(el.value)||0),updated:new Date().toISOString()};save();render();}});
-load();render();
+load();render();if(!PRIVATE)gsPull();
 </script>
 </body>
 </html>
