@@ -286,7 +286,7 @@ var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Ap
 
 var PRIVATE=false; /* the artifact build sets this true */
 var KEY="adacy-debt-v2";
-var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};
+var state={accounts:{},acctAt:{},cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};
 var tab="today", spendTest="";
 
 function money(n){return "$"+Math.round(Math.abs(Number(n)||0)).toLocaleString("en-US");}
@@ -305,14 +305,14 @@ function load(){
   var saved=null;
   try{var r=localStorage.getItem(KEY);if(r)saved=JSON.parse(r);}catch(e){}
   var src=saved||{};
-  state={accounts:Object.assign(defaults(),src.accounts||{}),
+  state={accounts:Object.assign(defaults(),src.accounts||{}),acctAt:src.acctAt||{},
          cash:src.cash||{balance:0,updated:null},
          history:src.history||[],spend:src.spend||[],skipped:src.skipped||[]};
   if(fromHash){
     var t=fromHash.cash&&fromHash.cash.updated?new Date(fromHash.cash.updated).getTime():0;
     var m=state.cash&&state.cash.updated?new Date(state.cash.updated).getTime():0;
     if(t>=m){
-      state={accounts:Object.assign(defaults(),fromHash.accounts||{}),
+      state={accounts:Object.assign(defaults(),fromHash.accounts||{}),acctAt:fromHash.acctAt||{},
              cash:fromHash.cash||state.cash,history:fromHash.history||state.history,
              spend:fromHash.spend||state.spend,skipped:fromHash.skipped||state.skipped||[]};
       save();toast("Loaded the newer numbers from that link");
@@ -328,9 +328,53 @@ function syncLink(){
 var tT;function toast(m){var e=document.getElementById("toast");if(!e)return;e.textContent=m;e.className="on";
   clearTimeout(tT);tT=setTimeout(function(){e.className="";},3200);}
 
-function accounts(){return SEED.map(function(s){
+/* ---------------- AUTO-TRACKING ----------------
+   A balance you type is the truth as of the day you typed it. After that the
+   app moves it on its own: on each account's due day it adds a month of
+   interest (balance x APR / 12) and takes off the minimum, and on the 8th it
+   takes the extra payment off whichever account the plan is pointing at that
+   day. The result is marked "estimated" until you type the real number from
+   a statement, which resets the clock for that account.
+   Balances already in the app before this shipped count as confirmed on
+   BAL_ASOF, so nothing moves retroactively. */
+var BAL_ASOF="2026-09-15";
+var _est=null;
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function parseYmd(k){var p=String(k||BAL_ASOF).split("-");return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
+function typedBal(s){return Math.max(0,Number(state.accounts[s[0]]!=null?state.accounts[s[0]]:s[1]));}
+function confirmBal(name){state.acctAt=state.acctAt||{};state.acctAt[name]=ymd(new Date());}
+function estimates(){
+  if(_est)return _est;
+  var at=state.acctAt||{}, today=new Date();today.setHours(0,0,0,0);
+  var A=SEED.map(function(s){var f=parseYmd(at[s[0]]);
+    return {name:s[0],apr:s[2],min:s[3],day:s[4],kind:s[5],limit:s[6]||0,noplan:!!NOPLAN[s[0]],
+            bal:typedBal(s),from:f,moved:false,paid:0,interest:0};});
+  var start=A.reduce(function(m,x){return x.from<m?x.from:m;},today);
+  var d=new Date(start);d.setDate(d.getDate()+1);
+  for(var g=0;d<=today&&g<800;g++,d.setDate(d.getDate()+1)){
+    var dom=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    A.forEach(function(x){
+      if(d<=x.from||x.bal<=0)return;
+      if(!(x.day===dom||(x.day>last&&dom===last)))return;
+      var it=x.bal*x.apr/100/12;x.bal+=it;x.interest+=it;
+      var pay=Math.min(x.min,x.bal);x.bal-=pay;x.paid+=pay;x.moved=true;
+      if(x.bal<0.5)x.bal=0;});
+    if(dom===EXTRA_DAY){
+      var pool=extraFor(d);
+      var live=A.filter(function(x){return !x.noplan&&x.bal>0&&d>x.from;})
+        .map(function(x){return {ref:x,current:x.bal,apr:x.apr,kind:x.kind,limit:x.limit};})
+        .sort(rank);
+      for(var j=0;j<live.length&&pool>0.005;j++){var x=live[j].ref,p=Math.min(pool,x.bal);
+        x.bal-=p;x.paid+=p;pool-=p;x.moved=true;if(x.bal<0.5)x.bal=0;}
+    }
+  }
+  _est={};A.forEach(function(x){_est[x.name]=x;});
+  return _est;
+}
+function accounts(){var E=estimates();return SEED.map(function(s){var e=E[s[0]];
   return {name:s[0],start:s[1],apr:s[2],min:s[3],day:s[4],kind:s[5],limit:s[6]||0,
-          current:Math.max(0,Number(state.accounts[s[0]]!=null?state.accounts[s[0]]:s[1]))};});}
+          current:Math.max(0,Math.round(e.bal*100)/100),typed:typedBal(s),
+          estimated:e.moved,asof:e.from,estPaid:e.paid,estInterest:e.interest};});}
 function isCard(x){return x.kind==="CARD"&&x.limit>0;}
 function util(x){return x.limit>0?x.current/x.limit:0;}
 function planAccounts(){return accounts().filter(function(x){return !NOPLAN[x.name];});}
@@ -416,7 +460,7 @@ function simMinOnly(list){
 }
 
 var _plan=null,_cars=null,_mono=null,_flow=null;
-function bust(){_plan=null;_cars=null;_mono=null;_flow=null;}
+function bust(){_plan=null;_cars=null;_mono=null;_flow=null;_est=null;}
 
 function plan(){
   if(_plan)return _plan;
@@ -512,7 +556,7 @@ function liveFlow(when){
   var out=[];
   FLOW.forEach(function(f){
     if(!ISACCT[f[1]]){out.push(f);return;}
-    var b=Math.max(0,Number(state.accounts[f[1]])||0);
+    var b=Math.max(0,(estimates()[f[1]]||{bal:0}).bal);
     if(b<=0)return;
     out.push([f[0],f[1],-Math.min(Math.abs(f[2]),Math.round(b))]);
   });
@@ -876,7 +920,8 @@ function acctRow(x){
    '<td><div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:'+KINDCOL[x.kind]+'"></span>'+
      '<span style="font-weight:700;font-size:12.5px'+(done?";text-decoration:line-through":"")+'">'+esc(x.name)+'</span></div>'+
      '<div class="mini" style="margin-top:6px;width:110px"><i style="width:'+Math.max(0,Math.min(100,pct))+'%;background:'+(done?"var(--green)":KINDCOL[x.kind])+'"></i></div>'+
-     (isCard(x)&&!done?'<div class="note" style="font-size:10px;margin-top:4px;color:'+utilCol(util(x))+'">'+Math.round(util(x)*100)+'% of '+money(x.limit)+'</div>':'')+'</td>'+
+     (isCard(x)&&!done?'<div class="note" style="font-size:10px;margin-top:4px;color:'+utilCol(util(x))+'">'+Math.round(util(x)*100)+'% of '+money(x.limit)+'</div>':'')+
+     (x.estimated?'<div class="note" style="font-size:10px;margin-top:3px;color:var(--amber)">estimated \u00b7 '+money(x.typed)+' on '+MONN[x.asof.getMonth()]+' '+x.asof.getDate()+', less '+money(x.estPaid)+' paid, plus '+money(x.estInterest)+' interest</div>':'')+'</td>'+
    '<td class="num" style="color:'+(x.apr>=30?"var(--red)":x.apr>=27?"var(--amber)":"var(--mut)")+';font-weight:'+(x.apr>=30?700:500)+'">'+x.apr.toFixed(2)+'%</td>'+
    '<td class="num" style="font-weight:700;color:'+(done?"var(--dim)":"var(--red)")+'">'+money(x.current*x.apr/100/12)+'</td>'+
    '<td class="num" style="color:var(--mut)">'+(done?"—":money(x.min))+'</td>'+
@@ -899,7 +944,7 @@ function viewAccounts(){
      '<div class="note">'+money(t.remaining)+' in the plan · '+money(carB)+' in car loans</div></div>'+
    '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
      '<div style="font-size:14px;font-weight:700">The plan · '+money(t.remaining)+' · '+p.months+' months left</div>'+
-     '<div class="note">Biggest interest bleed first. Type a new balance after you pay — every date in the Gone by column, and every chart, recalculates from what you type.</div></div>'+
+     '<div class="note">Balances move on their own now: each due day adds a month of interest and takes off the minimum, and the 8th takes off the extra payment. Anything <span style="color:var(--amber)">estimated</span> is the app\u2019s best guess \u2014 type the real balance from your statement and it locks in from that day.</div></div>'+
      '<div class="scroll"><table style="min-width:700px">'+acctHead()+'<tbody>'+a.map(acctRow).join("")+'</tbody></table></div></div>'+
    '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
      '<div style="font-size:14px;font-weight:700">Car loans · '+money(carB)+'</div>'+
@@ -1258,7 +1303,7 @@ function gsPull(){
       try{d=f&&f.content?JSON.parse(f.content):null;}catch(e){}
       var rr=d?Number(d.rev)||0:0, lr=Number(state.rev)||0;
       if(rr>lr){
-        state={accounts:Object.assign(defaults(),d.accounts||{}),cash:d.cash||{balance:0,updated:null},
+        state={accounts:Object.assign(defaults(),d.accounts||{}),acctAt:d.acctAt||{},cash:d.cash||{balance:0,updated:null},
                history:d.history||[],spend:d.spend||[],skipped:d.skipped||[],rev:rr};
         try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
         if(!document.activeElement||document.activeElement.tagName!=="INPUT")render();
@@ -1427,7 +1472,7 @@ function render(){
 document.addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
   if(b.dataset.tab){tab=b.dataset.tab;render();window.scrollTo(0,0);return;}
-  if(b.dataset.paid){state.accounts[b.dataset.paid]=0;save();render();
+  if(b.dataset.paid){state.accounts[b.dataset.paid]=0;confirmBal(b.dataset.paid);save();render();
     var pd=accounts().filter(function(x){return x.name===b.dataset.paid;})[0];
     toast(b.dataset.paid+(pd&&isCard(pd)?" cleared — keep the card open":" cleared — everything recalculated"));return;}
   if(b.dataset.skip){var k=b.dataset.skip,sl=state.skipped||[],at=sl.indexOf(k);
@@ -1446,7 +1491,7 @@ document.addEventListener("click",function(e){
   if(act==="applywind"){
     var wp=windfallPlan(windTest);
     if(!wp.items.length){toast("Nothing to apply");return;}
-    wp.items.forEach(function(it){state.accounts[it.name]=Math.max(0,Math.round(it.to));});
+    wp.items.forEach(function(it){state.accounts[it.name]=Math.max(0,Math.round(it.to));confirmBal(it.name);});
     var n=wp.items.length,z=wp.after.zeroed;
     windTest="";save();render();
     toast(n+" balance"+(n>1?"s":"")+" updated"+(z?" · "+z+" paid off — keep the cards open":""));return;}
@@ -1468,7 +1513,7 @@ document.addEventListener("click",function(e){
     else showLink(u);}
   if(act==="showlink")showLink(syncLink());
   if(act==="reset"){if(confirm("Reset every balance on this device?")){
-    state={accounts:defaults(),cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};save();render();toast("Reset");}}
+    state={accounts:defaults(),acctAt:{},cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};save();render();toast("Reset");}}
 });
 function showLink(u){var e=document.getElementById("linkbox");if(!e)return;
   e.innerHTML='<textarea readonly rows="4" style="width:100%;font-family:var(--mono);font-size:11px;text-align:left">'+esc(u)+'</textarea><div class="note" style="margin-top:6px">Select all and copy.</div>';
@@ -1480,7 +1525,7 @@ document.addEventListener("input",function(e){
 });
 document.addEventListener("change",function(e){
   var el=e.target;
-  if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);save();render();}
+  if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);confirmBal(el.dataset.bal);save();render();}
   if(el.id==="cashin"){state.cash={balance:Math.round(Number(el.value)||0),updated:new Date().toISOString()};save();render();}});
 load();render();if(!PRIVATE)gsPull();
 </script>
