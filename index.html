@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-title" content="Mancilla Budget">
 <meta name="theme-color" content="#000000">
 <meta name="robots" content="noindex, nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Mancilla Budget</title>
 <style>
 :root{
@@ -1575,6 +1577,26 @@ document.addEventListener("change",function(e){
   var el=e.target;
   if(el.dataset&&el.dataset.bal){state.accounts[el.dataset.bal]=Math.max(0,Number(el.value)||0);confirmBal(el.dataset.bal);save();render();}
   if(el.id==="cashin"){state.cash={balance:Math.round(Number(el.value)||0),updated:new Date().toISOString()};save();render();}});
+/* ---------------- STAY CURRENT ----------------
+   A home-screen app on iPhone can keep showing an old copy of this page for a
+   long time. Every minute, and whenever the app comes back to the front, it
+   fetches the live page fresh; if the BUILD stamp there is different, it
+   reloads itself onto the new version. Change BUILD on every deploy. */
+var BUILD="2026-09-15T21:10";
+function checkBuild(){
+  if(location.protocol!=="https:")return;
+  fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
+    .then(function(r){return r.ok?r.text():"";})
+    .then(function(t){var m=t.match(/var BUILD="([^"]+)"/);
+      if(m&&m[1]!==BUILD){
+        var el=document.activeElement;
+        if(el&&el.tagName==="INPUT")return; /* never yank the page while typing */
+        location.replace(location.pathname+"?v="+encodeURIComponent(m[1]));}})
+    .catch(function(){});
+}
+document.addEventListener("visibilitychange",function(){if(!document.hidden)checkBuild();});
+setInterval(function(){if(!document.hidden)checkBuild();},60000);
+setTimeout(checkBuild,1500);
 load();render();if(!PRIVATE)gsPull();
 </script>
 </body>
