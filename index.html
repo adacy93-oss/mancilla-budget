@@ -254,7 +254,7 @@ function thisMonthKey(){var d=new Date();return MONLBL[d.getMonth()]+" "+d.getFu
    Limits come from the Sep 2026 TransUnion report. A limit of 0 means an
    instalment loan or plan — it has no utilisation. */
 var SEED=[
- ["BRIGHTWAY",1217,35.99,55,5,"CARD",1650],["SEEN",950,35.99,55,15,"CARD",1000],
+ ["BRIGHTWAY",1188,35.99,144,2,"CARD",1650],["SEEN",950,35.99,55,15,"CARD",1000],
  ["CHARIZARD",0,35.98,144,25,"BNPL",0],["AFFIRM VIRTUAL",5294,35.98,562,5,"BNPL",0],
  ["AFFIRM AMZN 5",609,34.00,72,1,"BNPL",0],["UPSTART 2",11629,32.32,425,28,"LOAN",0],
  ["UPSTART 1",7716,30.21,320,4,"LOAN",0],["PAYPAL",1700,29.99,32,22,"CARD",2000],
@@ -285,7 +285,7 @@ var BASE_MIN=SEED.filter(function(s){return !NOPLAN[s[0]];}).reduce(function(a,s
 var CAR_MIN=SEED.filter(function(s){return NOPLAN[s[0]];}).reduce(function(a,s){return a+s[3];},0);
 
 var FLOW=[[1,"RENT",-3000],[1,"CAP ONE VENTURE",-25],[1,"AFFIRM AMZN 4",-54],[1,"AFFIRM AMZN 5",-72],
-[4,"UPSTART 1",-320],[5,"BRIGHTWAY",-55],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
+[4,"UPSTART 1",-320],[2,"BRIGHTWAY",-144],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
 [7,"SPARROW",-42],[8,"BEST BUY",-40],[9,"AMEX ADACY",-40],[12,"USAA",-45],[12,"UTILITIES",-375],
 [17,"KLARNA",-213],[21,"UPGRADE",-170],
 [15,"CAP ONE SAVOR",-40],[15,"CREDIT ONE",-40],[15,"SEEN",-55],[17,"CHASE",-230],
@@ -1653,7 +1653,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-15T22:30";
+var BUILD="2026-09-15T23:15";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
