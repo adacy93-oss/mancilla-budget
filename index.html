@@ -286,7 +286,7 @@ var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Ap
 
 var PRIVATE=false; /* the artifact build sets this true */
 var KEY="adacy-debt-v2";
-var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[]};
+var state={accounts:{},cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};
 var tab="today", spendTest="";
 
 function money(n){return "$"+Math.round(Math.abs(Number(n)||0)).toLocaleString("en-US");}
@@ -307,14 +307,14 @@ function load(){
   var src=saved||{};
   state={accounts:Object.assign(defaults(),src.accounts||{}),
          cash:src.cash||{balance:0,updated:null},
-         history:src.history||[],spend:src.spend||[]};
+         history:src.history||[],spend:src.spend||[],skipped:src.skipped||[]};
   if(fromHash){
     var t=fromHash.cash&&fromHash.cash.updated?new Date(fromHash.cash.updated).getTime():0;
     var m=state.cash&&state.cash.updated?new Date(state.cash.updated).getTime():0;
     if(t>=m){
       state={accounts:Object.assign(defaults(),fromHash.accounts||{}),
              cash:fromHash.cash||state.cash,history:fromHash.history||state.history,
-             spend:fromHash.spend||state.spend};
+             spend:fromHash.spend||state.spend,skipped:fromHash.skipped||state.skipped||[]};
       save();toast("Loaded the newer numbers from that link");
     } else toast("That link was older than this phone — kept yours");
     history.replaceState(null,"",location.pathname+location.search);
@@ -529,6 +529,13 @@ function flowEvents(d){
   if(dis)ev=ev.concat([[d.getDate(),"DISABILITY",dis]]);
   if(gi)ev=ev.concat([[d.getDate(),"GI BILL HOUSING",gi]]);
   return ev;}
+/* Bills already paid early. A bill marked paid for a month is taken out of
+   that month's forecast only — it comes back as normal next month. Stored as
+   "YYYY-MM|NAME" so it syncs with everything else. */
+function skipKey(d,name){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"|"+name;}
+function isSkipped(d,name){return (state.skipped||[]).indexOf(skipKey(d,name))>-1;}
+function pruneSkipped(){var n=new Date(),cur=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
+  state.skipped=(state.skipped||[]).filter(function(k){return k.slice(0,7)>=cur;});}
 function forecast(startBal,days){
   var t0=new Date();t0.setHours(0,0,0,0);
   var bal=Number(startBal)||0,out=[];
@@ -538,7 +545,10 @@ function forecast(startBal,days){
     var hits=flowEvents(d).filter(function(f){return f[0]===dom||(f[0]>last&&dom===last);})
       .sort(function(a,b){return a[2]-b[2];});
     bal-=dripFor(d);
-    var items=hits.map(function(f){bal+=f[2];return {name:f[1],amt:f[2]};});
+    var items=hits.map(function(f){
+      var sk=f[2]<0&&isSkipped(d,f[1]);
+      if(!sk)bal+=f[2];
+      return {name:f[1],amt:f[2],key:skipKey(d,f[1]),skipped:sk};});
     out.push({date:new Date(d),items:items,bal:bal,drip:dripFor(d)});
   }
   return out;
@@ -722,7 +732,7 @@ function viewNow(){
   if(tr.date){for(var q=0;q<fc.length;q++){if(fc[q].date.getTime()===tr.date.getTime()){ti=q;break;}}}
   var inFlow=0,outFlow=0,dripTot=0;
   fc.slice(0,ti+1).forEach(function(d){dripTot+=d.drip;
-    d.items.forEach(function(it){if(it.amt>0)inFlow+=it.amt;else outFlow-=it.amt;});});
+    d.items.forEach(function(it){if(it.skipped)return;if(it.amt>0)inFlow+=it.amt;else outFlow-=it.amt;});});
   var lineRow=function(label,amt,muted){
     return '<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 0;font-size:12.5px">'+
       '<span style="color:'+(muted?"var(--mut)":"var(--tx)")+'">'+label+'</span>'+
@@ -731,19 +741,24 @@ function viewNow(){
 
   var pi=-1;for(var i=0;i<fc.length;i++){if(fc[i].items.some(function(x){return x.amt>0;})){pi=i;break;}}
   var before=0;if(pi>-1)fc.slice(0,pi+1).forEach(function(d){
-    before+=d.drip+d.items.filter(function(x){return x.amt<0;}).reduce(function(s,x){return s-x.amt;},0);});
+    before+=d.drip+d.items.filter(function(x){return x.amt<0&&!x.skipped;}).reduce(function(s,x){return s-x.amt;},0);});
   var stale=state.cash.updated&&(Date.now()-new Date(state.cash.updated).getTime())/864e5>3;
   var overBudget=false;
   var t=totals();
 
   var bills=fc.slice(0,HORIZON).map(function(d){
     var neg=d.bal<0,drip=d.drip,catchup=drip<VAR_DAILY-0.5;
-    function line(name,amt,kind){ /* kind: "in", "out", "drip" */
-      var col=kind==="in"?"var(--green)":kind==="drip"?"var(--dim)":"var(--tx)",w=kind==="in"?"700":"400",it=kind==="drip"?"font-style:italic;":"";
-      return '<div style="display:grid;grid-template-columns:1fr 72px;gap:8px;font-size:12.5px;line-height:20px;'+it+'">'+
-        '<span style="color:'+col+';font-weight:'+w+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>'+
-        '<span class="num" style="text-align:right;color:'+col+'">'+(kind==="in"?"+":"\u2212")+money(amt)+'</span></div>';}
-    var lines=d.items.map(function(it){return line(esc(it.name),it.amt,it.amt>0?"in":"out");}).join("")+
+    function line(name,amt,kind,it0){ /* kind: "in", "out", "drip" */
+      var sk=it0&&it0.skipped;
+      var col=sk?"var(--dim)":kind==="in"?"var(--green)":kind==="drip"?"var(--dim)":"var(--tx)",w=kind==="in"?"700":"400",it=kind==="drip"?"font-style:italic;":"";
+      var strike=sk?";text-decoration:line-through":"";
+      var label=kind==="out"&&it0?
+        '<button data-skip="'+esc(it0.key)+'" aria-label="'+(sk?"Undo paid early: ":"Mark paid early: ")+name+'" style="all:unset;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+col+';font-weight:'+w+strike+'">'+
+          (sk?'<span style="color:var(--green);text-decoration:none;display:inline-block;margin-right:4px">\u2713</span>':'')+name+'</button>'
+        :'<span style="color:'+col+';font-weight:'+w+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>';
+      return '<div style="display:grid;grid-template-columns:1fr 72px;gap:8px;font-size:12.5px;line-height:20px;'+it+'">'+label+
+        '<span class="num" style="text-align:right;color:'+col+strike+'">'+(kind==="in"?"+":"\u2212")+money(amt)+'</span></div>';}
+    var lines=d.items.map(function(it){return line(esc(it.name),it.amt,it.amt>0?"in":"out",it);}).join("")+
               line("Everyday spending"+(catchup?" \u00b7 catch-up":""),drip,"drip");
     return '<div style="display:grid;grid-template-columns:74px 1fr 78px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);align-items:start;'+(neg?'background:rgba(227,25,55,.08)':'')+'">'+
      '<div style="font-size:11.5px;line-height:20px;font-weight:'+(d.items.length?700:400)+';color:'+(neg?"var(--red)":d.items.length?"var(--mut)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
@@ -805,7 +820,8 @@ function viewNow(){
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
     '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next two months</div>'+
-    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div></div>'+
+    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div>'+
+    '<div class="note" style="margin-top:6px;color:var(--tx)"><b>Already paid a bill early?</b> Tap its name to take it off that month \u2014 it comes back next month. Tap again to undo.</div></div>'+
     bills+'</div></div>';
 }
 
@@ -893,7 +909,7 @@ function viewAccounts(){
 
 /* ---------------- THE MONTH ---------------- */
 function viewMonth(){
-  var nw=new Date(), ev=liveFlow().slice();
+  var nw=new Date(), ev=liveFlow().filter(function(f){return !(f[2]<0&&isSkipped(nw,f[1]));});
   if(new Date(nw.getFullYear(),nw.getMonth(),1)>=DIS_START){
     var dd=disabilityDay(nw.getFullYear(),nw.getMonth());
     var early=dd.getMonth()!==nw.getMonth();
@@ -1243,7 +1259,7 @@ function gsPull(){
       var rr=d?Number(d.rev)||0:0, lr=Number(state.rev)||0;
       if(rr>lr){
         state={accounts:Object.assign(defaults(),d.accounts||{}),cash:d.cash||{balance:0,updated:null},
-               history:d.history||[],spend:d.spend||[],rev:rr};
+               history:d.history||[],spend:d.spend||[],skipped:d.skipped||[],rev:rr};
         try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
         if(!document.activeElement||document.activeElement.tagName!=="INPUT")render();
       } else if(rr<lr){gsPush();}
@@ -1414,6 +1430,11 @@ document.addEventListener("click",function(e){
   if(b.dataset.paid){state.accounts[b.dataset.paid]=0;save();render();
     var pd=accounts().filter(function(x){return x.name===b.dataset.paid;})[0];
     toast(b.dataset.paid+(pd&&isCard(pd)?" cleared — keep the card open":" cleared — everything recalculated"));return;}
+  if(b.dataset.skip){var k=b.dataset.skip,sl=state.skipped||[],at=sl.indexOf(k);
+    pruneSkipped();sl=state.skipped;at=sl.indexOf(k);
+    if(at>-1){sl.splice(at,1);toast(k.split("|")[1]+" is back in the forecast");}
+    else{sl.push(k);toast(k.split("|")[1]+" marked paid for "+MONN[Number(k.slice(5,7))-1]+" \u2014 it comes back next month");}
+    save();render();return;}
   if(b.dataset.del){var id=Number(b.dataset.del);
     state.spend=(state.spend||[]).filter(function(x){return x.id!==id;});save();render();return;}
   if(b.dataset.spend!=null){spendTest=b.dataset.spend==="0"?"":b.dataset.spend;
@@ -1447,7 +1468,7 @@ document.addEventListener("click",function(e){
     else showLink(u);}
   if(act==="showlink")showLink(syncLink());
   if(act==="reset"){if(confirm("Reset every balance on this device?")){
-    state={accounts:defaults(),cash:{balance:0,updated:null},history:[],spend:[]};save();render();toast("Reset");}}
+    state={accounts:defaults(),cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};save();render();toast("Reset");}}
 });
 function showLink(u){var e=document.getElementById("linkbox");if(!e)return;
   e.innerHTML='<textarea readonly rows="4" style="width:100%;font-family:var(--mono);font-size:11px;text-align:left">'+esc(u)+'</textarea><div class="note" style="margin-top:6px">Select all and copy.</div>';
