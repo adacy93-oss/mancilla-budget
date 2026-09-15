@@ -231,6 +231,21 @@ function giPayOn(d){var g=giFor(d);if(!g)return 0;
 function extraFor(d){var g=giFor(d);
   return EXTRA_BASE+(d>=DIS_START?DIS_TO_DEBT:0)+(g?g.debt:0);}
 function extraThisMonth(){return extraFor(new Date());}
+/* The next extra payment that has not gone out yet: its date, the amount, what
+   that amount is made of, and exactly how it splits across accounts. */
+function nextExtra(){
+  var n=new Date();n.setHours(0,0,0,0);
+  var d=new Date(n.getFullYear(),n.getMonth(),EXTRA_DAY);
+  if(d<n)d=new Date(n.getFullYear(),n.getMonth()+1,EXTRA_DAY);
+  var P=projection()[d.getFullYear()*12+d.getMonth()], g=giFor(d);
+  var parts=[money(EXTRA_BASE)+" base"];
+  if(d>=DIS_START)parts.push(money(DIS_TO_DEBT)+" disability");
+  if(g&&g.debt)parts.push(money(g.debt)+" GI Bill");
+  var split=P?P.extras.slice().sort(function(a,b){return b[1]-a[1];}):[];
+  var before=P?P.start:{};
+  return {date:d,amt:extraFor(d),parts:parts,split:split,before:before,
+    sent:split.reduce(function(a,e){return a+e[1];},0)};
+}
 function thisMonthKey(){var d=new Date();return MONLBL[d.getMonth()]+" "+d.getFullYear();}
 
 /* name, starting balance, APR, minimum, day of month, kind, credit limit.
@@ -702,7 +717,7 @@ function viewDescent(){
       '<text x="'+(gx(x.i)+7)+'" y="'+(y+7.5)+'" font-size="8" fill="#6E6E6E" font-family="var(--mono)">'+(done?"PAID":x.gone)+'</text>';});
 
   var tg=targetAccount(), carB=carAccounts().reduce(function(s,x){return s+Math.max(0,x.current);},0);
-  var amt=tg?Math.min(extraThisMonth(),Math.max(0,Math.round(tg.current-tg.min))):0;
+  var nx=nextExtra();
   var saveM=Math.max(0,mo.zeroIdx-p.zeroIdx), saveI=Math.max(0,mo.interest-p.interest);
 
   return '<div class="grid">'+
@@ -737,21 +752,24 @@ function viewDescent(){
     tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
     tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
     tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
-    tile("↑","#F59E0B","Extra payment",money(extraThisMonth()),thisMonthKey()+
-      (new Date()<DIS_START?" · "+money(EXTRA_BASE+DIS_TO_DEBT)+" from "+MONLBL[DIS_START.getMonth()]
-       :" · incl. "+money(DIS_TO_DEBT)+" of the benefit"))+
+    tile("↑","#FFD60A","Next extra payment",money(nx.amt),MONN[nx.date.getMonth()]+" "+nx.date.getDate()+" · "+nx.parts.join(" + "),"#FFD60A")+
   '</div>'+
 
-  (tg?'<div class="card pad" style="border-left:3px solid var(--red)">'+
-    '<div class="eyebrow">Everything extra goes here this month</div>'+
+  (tg?'<div class="card pad" style="border-left:3px solid #FFD60A">'+
+    '<div class="eyebrow">Next extra payment \u00b7 '+DAYN[nx.date.getDay()]+' '+MONN[nx.date.getMonth()]+' '+nx.date.getDate()+'</div>'+
     '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin:9px 0 0">'+
-      '<div style="font-size:23px;font-weight:800;letter-spacing:-.02em">'+esc(tg.name)+'</div>'+
-      '<div class="num" style="font-size:12.5px;color:var(--red)">'+tg.apr.toFixed(2)+'% · '+money(tg.current)+' left · '+money(tg.current*tg.apr/100/12)+'/mo bleed</div></div>'+
-    '<div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:15px;padding-top:15px;border-top:1px solid var(--line)">'+
-      '<div><div class="eyebrow">Pay extra</div><div class="num" style="font-size:26px;font-weight:800;color:var(--green)">'+money(amt)+'</div>'+
-        '<div class="note" style="font-size:10.5px">on top of the '+money(Math.min(tg.min,tg.current))+' minimum</div></div>'+
-      '<div><div class="eyebrow">Send it on the</div><div style="font-size:26px;font-weight:800">'+ord(EXTRA_DAY)+'</div>'+
-        '<div class="note" style="font-size:10.5px">the day after the 7th paycheck, once rent has cleared</div></div></div></div>'
+      '<div class="num" style="font-size:30px;font-weight:800;letter-spacing:-.02em;color:#FFD60A">'+money(nx.amt)+'</div>'+
+      '<div class="note" style="font-size:11.5px">'+nx.parts.join(" + ")+'</div></div>'+
+    '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--line)">'+
+      (nx.split.length?nx.split.map(function(e){
+        var b0=Math.max(0,nx.before[e[0]]||0), left=Math.max(0,b0-e[1]);
+        return '<div style="display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);align-items:baseline">'+
+          '<div style="min-width:0"><div style="font-weight:800;color:#FFD60A;font-size:14px">'+esc(e[0])+'</div>'+
+          '<div class="note" style="font-size:10.5px">'+(left<=1?'<b style="color:var(--green)">paid off</b> \u00b7 was about '+money(b0):'about '+money(b0)+' going in \u2192 '+money(left)+' left')+'</div></div>'+
+          '<div class="num" style="font-weight:800;color:#FFD60A;font-size:15px">'+money(e[1])+'</div></div>';}).join("")
+       :'<div class="note">Nothing left in the plan to send it to.</div>')+
+    '</div>'+
+    '<div class="note" style="margin-top:9px;font-size:10.5px">On top of the minimums. Split the way it lands: fullest card first, then loans. Balances shown are the app\u2019s projection for that morning.</div></div>'
    :'<div class="card pad" style="border-left:3px solid var(--green)">'+
      '<div class="eyebrow">Nothing left in the plan</div>'+
      '<p style="font-size:14px;margin:9px 0 0">Every account in the 16-month plan is at zero. Everything now points at the cars.</p></div>')+
