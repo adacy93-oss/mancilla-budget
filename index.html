@@ -267,7 +267,7 @@ var SEED=[
  ["AFFIRM AMZN 2",484,24.71,109,23,"BNPL",0],["UPSTART 3",2676,0.0,243,22,"LOAN",0],
  ["BEST BUY",997,31.99,40,8,"CARD",1150],["KLARNA",1338,34.99,213,17,"BNPL",0],
  ["UPGRADE",2314,26.00,170,21,"LOAN",0],
- ["ALLY",34975,1.99,905,28,"AUTO",0],["TOYOTA FINANCIAL",38919,8.01,760,29,"AUTO",0]];
+ ["ALLY",34975,1.99,905,28,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
 
 /* Open cards with nothing on them. They never draft and they are not debt,
    but their limits are most of your available credit, so they belong in the
@@ -292,7 +292,7 @@ var FLOW=[[1,"RENT",-3000],[1,"CAP ONE VENTURE",-25],[1,"AFFIRM AMZN 4",-54],[1,
 [20,"CITI COSTCO",-120],[21,"FEDERAL TAX",-530],[21,"STATE TAX",-752],[22,"PAYCHECK 2",5800],
 [22,"PAYPAL",-32],[22,"UPSTART 3",-243],[22,"AFFIRM AMZN 1",-43],[23,"AFFIRM AMZN 2",-109],
 [25,"CHARIZARD",-144],[25,"CAR INSURANCE",-230],[27,"AFFIRM AMZN 3",-51],[28,"UPSTART 2",-425],
-[28,"ALLY",-905],[28,"PHONE",-180],[29,"TOYOTA FINANCIAL",-760],[30,"APPLE CARD",-20]];
+[16,"CONCORA CARD FEES",-10],[28,"ALLY",-905],[28,"PHONE",-180],[29,"TOYOTA FINANCIAL",-769],[30,"APPLE CARD",-20]];
 /* The extra goes out the day after the first paycheck of the month, once rent
    has cleared. Sending it on the 23rd put it on the wrong side of rent and
    pushed the first week of the following month under. */
@@ -1653,7 +1653,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-15T22:05";
+var BUILD="2026-09-15T22:30";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
