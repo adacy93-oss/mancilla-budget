@@ -88,10 +88,11 @@ details.fold>.body{padding:0 10px 10px}
 details.fold>.body>.grid{gap:12px}
 .mini{height:5px;border-radius:99px;background:var(--panel2);overflow:hidden}
 .mini>i{display:block;height:100%;border-radius:99px}
-#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(90px);
+#toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(calc(100% + 60px));opacity:0;visibility:hidden;pointer-events:none;
   background:var(--panel2);border:1px solid var(--line2);color:var(--tx);padding:12px 18px;
-  border-radius:6px;font-size:13px;transition:transform .25s;z-index:60;max-width:88vw;text-align:center}
-#toast.on{transform:translateX(-50%) translateY(0)}
+  border-radius:6px;font-size:13px;transition:transform .25s,opacity .25s,visibility 0s linear .25s;z-index:60;max-width:88vw;text-align:center}
+#toast.on{transform:translateX(-50%) translateY(0);opacity:1;visibility:visible;transition:transform .25s,opacity .25s,visibility 0s}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media (max-width:860px){
   aside{display:none}
@@ -1478,7 +1479,7 @@ document.addEventListener("click",function(e){
   if(b.dataset.skip){var k=b.dataset.skip,sl=state.skipped||[],at=sl.indexOf(k);
     pruneSkipped();sl=state.skipped;at=sl.indexOf(k);
     if(at>-1){sl.splice(at,1);toast(k.split("|")[1]+" is back in the forecast");}
-    else{sl.push(k);toast(k.split("|")[1]+" marked paid for "+MONN[Number(k.slice(5,7))-1]+" \u2014 it comes back next month");}
+    else{sl.push(k);toast(k.split("|")[1]+" paid for "+MONN[Number(k.slice(5,7))-1]);}
     save();render();return;}
   if(b.dataset.del){var id=Number(b.dataset.del);
     state.spend=(state.spend||[]).filter(function(x){return x.id!==id;});save();render();return;}
