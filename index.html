@@ -305,7 +305,7 @@ var DAYN=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],MONN=["Jan","Feb","Mar","Ap
 var PRIVATE=false; /* the artifact build sets this true */
 var KEY="adacy-debt-v2";
 var state={accounts:{},acctAt:{},cash:{balance:0,updated:null},history:[],spend:[],skipped:[]};
-var tab="today", spendTest="";
+var tab="today", spendTest="", spendMode="once", spendDay=15;
 
 function money(n){return "$"+Math.round(Math.abs(Number(n)||0)).toLocaleString("en-US");}
 function signed(n){return (n<0?"−":"")+money(n);}
@@ -625,13 +625,14 @@ function skipKey(d,name){return d.getFullYear()+"-"+String(d.getMonth()+1).padSt
 function isSkipped(d,name){return (state.skipped||[]).indexOf(skipKey(d,name))>-1;}
 function pruneSkipped(){var n=new Date(),cur=n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");
   state.skipped=(state.skipped||[]).filter(function(k){return k.slice(0,7)>=cur;});}
-function forecast(startBal,days){
+function forecast(startBal,days,addFn){
   var t0=new Date();t0.setHours(0,0,0,0);
   var bal=Number(startBal)||0,out=[];
   for(var k=1;k<=days;k++){
     var d=new Date(t0);d.setDate(t0.getDate()+k);
     var dom=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-    var hits=flowEvents(d).filter(function(f){return f[0]===dom||(f[0]>last&&dom===last);})
+    var evs=flowEvents(d);if(addFn)evs=evs.concat(addFn(d)||[]);
+    var hits=evs.filter(function(f){return f[0]===dom||(f[0]>last&&dom===last);})
       .sort(function(a,b){return a[2]-b[2];});
     bal-=dripFor(d);
     var items=hits.map(function(f){
@@ -645,7 +646,7 @@ function forecast(startBal,days){
 /* How far ahead the cash forecast looks. Two full months, so the next
    rent and the one after it are both inside the window. */
 var HORIZON=62;
-function troughOf(bal){var f=forecast(bal,HORIZON),t={bal:Number(bal)||0,date:null};
+function troughOf(bal,addFn){var f=forecast(bal,HORIZON,addFn),t={bal:Number(bal)||0,date:null};
   f.forEach(function(d){if(d.bal<t.bal)t={bal:d.bal,date:d.date};});return {fc:f,tr:t};}
 
 /* Plain-language note about when the next payment actually lands. */
@@ -796,7 +797,64 @@ function viewDescent(){
 }
 
 /* ---------------- RIGHT NOW ---------------- */
+/* ---------------- CAN I AFFORD IT ----------------
+   What a normal month leaves over once every bill, every minimum, the extra
+   payment and $30 a day of everyday spending are paid. Money that isn't there
+   has to come out of the extra payment, and that is what moves the
+   debt-free date. */
+function monthlySurplus(d){
+  var inc=0,bills=0;
+  FLOW.forEach(function(f){if(ISACCT[f[1]])return;if(f[2]>0)inc+=f[2];else bills-=f[2];});
+  var g=giFor(d);
+  inc+=(d>=DIS_START?DISABILITY:0)+(g?g.amt:0);
+  return inc-bills-BASE_MIN-CAR_MIN-extraFor(d)-VAR_DAILY*30.4;
+}
+function planWith(cutFn){
+  var list=planAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};});
+  return simulate(list,function(d){return BASE_MIN+Math.max(0,extraFor(d)-cutFn(d));},420);
+}
+function mkey(d){return d.getFullYear()*12+d.getMonth();}
+function delayText(p0,p1){
+  var m=p1.zeroIdx-p0.zeroIdx, i=Math.max(0,p1.interest-p0.interest);
+  if(!p1.done)return 'You would <b>never finish</b> the plan at that pace.';
+  if(m<=0&&i<1)return 'Debt-free stays <b>'+keyFromMi(p0.zeroIdx)+'</b>.';
+  return 'Debt-free moves from <b>'+keyFromMi(p0.zeroIdx)+'</b> to <b>'+keyFromMi(p1.zeroIdx)+'</b>'+(m>0?' ('+m+' month'+(m>1?'s':'')+' later)':'')+', about <b class="num">'+money(i)+'</b> more interest.';
+}
+function verdictBox(word,col,body){
+  return '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">'+
+    '<div style="font-size:25px;font-weight:800;letter-spacing:-.02em;color:'+col+'">'+word+'</div>'+
+    '<p style="font-size:13px;line-height:1.55;margin:6px 0 0;color:var(--tx)">'+body+'</p></div>';
+}
+function monthlyVerdict(P){
+  var n=new Date(), start=new Date(n.getFullYear(),n.getMonth()+1,1), day=Math.max(1,Math.min(28,Number(spendDay)||15));
+  var p0=plan(), worst=0, worstD=null, cuts={};
+  for(var k=0;k<36;k++){var d=new Date(start.getFullYear(),start.getMonth()+k,1);
+    var sur=Math.max(0,monthlySurplus(d)), cut=Math.max(0,P-sur);cuts[mkey(d)]=cut;
+    if(cut-extraFor(d)>worst){worst=cut-extraFor(d);worstD=d;}}
+  var steadyD=new Date(Math.max(start.getTime(),new Date(2027,0,1).getTime()));
+  var steady=monthlySurplus(steadyD);
+  var cutFn=function(d){return cuts[mkey(d)]||0;};
+  var p1=planWith(cutFn);
+  var add=function(d){return d>=start?[[day,"NEW PAYMENT",-P]]:[];};
+  var bal=workingBalance(), tr=state.cash.updated?troughOf(bal,add).tr:null;
+  var steadyCut=Math.max(0,P-Math.max(0,steady));
+  var cash=tr?' Over the next two months, with nothing else changed, your lowest day would be <b class="num">'+signed(tr.bal)+'</b>'+(tr.date?' on <b>'+fmtDate(tr.date)+'</b>':'')+'.':'';
+  var head='A normal month (from '+MONN[steadyD.getMonth()]+' '+steadyD.getFullYear()+') leaves about <b class="num">'+signed(steady)+'</b> after every bill, minimum, the '+money(extraFor(steadyD))+' extra and $'+VAR_DAILY+' a day. ';
+  if(worst>0.5)
+    return verdictBox("NO","var(--red)",head+money(P)+'/mo is <b class="num">'+money(worst)+'</b> more than you have in '+MONN[worstD.getMonth()]+' '+worstD.getFullYear()+' even with no extra payments at all.'+cash);
+  if(steadyCut<0.5&&Object.keys(cuts).every(function(k){return cuts[k]<0.5;}))
+    return verdictBox(steady-P<200?"YES, BUT TIGHT":"YES",steady-P<200?"var(--amber)":"var(--green)",head+'That covers '+money(P)+'/mo with <b class="num">'+money(steady-P)+'</b> to spare, so the plan doesn\u2019t change. '+delayText(p0,p1)+cash);
+  return verdictBox("ONLY BY SLOWING THE PLAN","var(--amber)",head+'To pay '+money(P)+'/mo you\u2019d send about <b class="num">'+money(steadyCut)+'</b> less extra each month. '+delayText(p0,p1)+cash);
+}
 function spendVerdict(){
+  if(spendMode==="monthly"){
+    var P=Math.max(0,Number(spendTest)||0);
+    if(!P)return '<p class="note" style="margin:12px 0 0">Type a monthly payment \u2014 a car note, a new bill. I\u2019ll check it against a normal month and show what it does to your debt-free date.</p>';
+    return monthlyVerdict(P);
+  }
+  return onceVerdict();
+}
+function onceVerdict(){
   var amt=Math.max(0,Number(spendTest)||0);
   if(!amt)return '<p class="note" style="margin:12px 0 0">Type an amount or tap one. I\'ll check it against every bill in the next two months, up to your thinnest day.</p>';
   if(!state.cash.updated)return '<p class="note" style="margin:12px 0 0">Put your Chase balance in first — I can\'t answer without it.</p>';
@@ -804,8 +862,14 @@ function spendVerdict(){
   var ok=o.tr.bal>=0, tight=ok&&o.tr.bal<200;
   var col=!ok?"var(--red)":tight?"var(--amber)":"var(--green)";
   var word=!ok?"NO":tight?"YES, BUT TIGHT":"YES", body;
-  if(!ok) body='Spending '+money(amt)+' puts you <b class="num">'+money(Math.abs(o.tr.bal))+'</b> under on <b>'+(o.tr.date?fmtDate(o.tr.date):"—")+'</b>. '+
-    (base.tr.bal>0?'The most you could spend today is <b class="num">'+money(base.tr.bal)+'</b>.':'You can\'t spend anything today — you\'re already short before this.');
+  if(!ok){
+    var need=Math.abs(o.tr.bal)+200, nx=nextExtra(), left=need, cuts={};
+    for(var k=0;k<24&&left>0;k++){var d=new Date(nx.date.getFullYear(),nx.date.getMonth()+k,1),c=Math.min(left,extraFor(d));cuts[mkey(d)]=c;left-=c;}
+    var p1=planWith(function(d){return cuts[mkey(d)]||0;});
+    body='Spending '+money(amt)+' puts you <b class="num">'+money(Math.abs(o.tr.bal))+'</b> under on <b>'+(o.tr.date?fmtDate(o.tr.date):"—")+'</b>. '+
+    (base.tr.bal>0?'The most you could spend today is <b class="num">'+money(base.tr.bal)+'</b>. ':'You can\'t spend anything today — you\'re already short before this. ')+
+    'To do it anyway, hold back <b class="num">'+money(need)+'</b> from the extra payment starting '+MONN[nx.date.getMonth()]+' '+nx.date.getDate()+'. '+delayText(plan(),p1);
+  }
   else if(tight) body='It clears, but you\'d be down to <b class="num">'+money(o.tr.bal)+'</b> on <b>'+(o.tr.date?fmtDate(o.tr.date):"—")+'</b> — inside the $200 buffer. One surprise and it bounces.';
   else body='After spending '+money(amt)+' you still have <b class="num">'+money(o.tr.bal)+'</b> at your thinnest point on <b>'+(o.tr.date?fmtDate(o.tr.date):"—")+'</b>. Nothing bounces.';
   return '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">'+
@@ -896,13 +960,18 @@ function viewNow(){
     (since>0?'<p class="note" style="margin:12px 0 0;color:var(--amber)">If the balance you typed already had these purchases taken out, delete them from Spending or retype the balance — otherwise the same money is counted twice.</p>':'')+'</div>'+
 
   '<div class="card pad">'+
-    '<div class="eyebrow">Can I spend</div>'+
+    '<div class="eyebrow">Can I afford it</div>'+
+    '<div style="display:flex;gap:7px;margin-top:11px">'+
+      [["once","One time"],["monthly","Every month"]].map(function(m){var on=spendMode===m[0];
+        return '<button class="btn'+(on?'':' ghost')+'" data-spendmode="'+m[0]+'" style="padding:8px 14px;font-size:12px">'+m[1]+'</button>';}).join("")+'</div>'+
     '<div style="display:flex;align-items:center;gap:11px;margin:11px 0 0;flex-wrap:wrap">'+
       '<span class="num" style="font-size:23px;color:var(--dim)">$</span>'+
-      '<input type="number" inputmode="decimal" id="spendin" value="'+(spendTest||"")+'" placeholder="0" style="font-size:22px;width:140px" aria-label="Amount to spend">'+
-      '<span class="note">right now?</span></div>'+
+      '<input type="number" inputmode="decimal" id="spendin" value="'+(spendTest||"")+'" placeholder="0" style="font-size:22px;width:140px" aria-label="Amount">'+
+      (spendMode==="monthly"
+        ?'<span class="note">a month, due on the</span><input type="number" inputmode="numeric" id="spendday" value="'+spendDay+'" min="1" max="28" style="font-size:16px;width:56px" aria-label="Day of month"><span class="note">starting next month</span>'
+        :'<span class="note">right now?</span>')+'</div>'+
     '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">'+
-      [25,50,100,250,500].map(function(v){return '<button class="btn ghost" data-spend="'+v+'">$'+v+'</button>';}).join("")+
+      (spendMode==="monthly"?[100,250,500,750]:[100,500,1000,3000]).map(function(v){return '<button class="btn ghost" data-spend="'+v+'">$'+v.toLocaleString("en-US")+'</button>';}).join("")+
       '<button class="btn ghost" data-spend="0">Clear</button></div>'+
     '<div id="spendout"></div></div>'+
 
@@ -1532,6 +1601,7 @@ document.addEventListener("click",function(e){
     save();render();return;}
   if(b.dataset.del){var id=Number(b.dataset.del);
     state.spend=(state.spend||[]).filter(function(x){return x.id!==id;});save();render();return;}
+  if(b.dataset.spendmode){spendMode=b.dataset.spendmode;spendTest="";render();return;}
   if(b.dataset.spend!=null){spendTest=b.dataset.spend==="0"?"":b.dataset.spend;
     var si=document.getElementById("spendin");if(si)si.value=spendTest;paintSpend();return;}
   if(b.dataset.wind){windTest=b.dataset.wind;
@@ -1570,6 +1640,7 @@ function showLink(u){var e=document.getElementById("linkbox");if(!e)return;
   var t=e.querySelector("textarea");t.focus();t.select();}
 document.addEventListener("input",function(e){
   if(e.target&&e.target.id==="spendin"){spendTest=e.target.value;paintSpend();}
+  if(e.target&&e.target.id==="spendday"){spendDay=e.target.value;paintSpend();}
   if(e.target&&e.target.id==="windin"){windTest=e.target.value;paintWind();}
   if(e.target&&e.target.id==="rp-scrub"){RP.paused=true;RP.hold=0;RP.t=Number(e.target.value)||0;var pb=document.getElementById("rp-play");if(pb)pb.textContent="\u25B6";rpPaint();}
 });
@@ -1582,7 +1653,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-15T21:10";
+var BUILD="2026-09-15T21:40";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
