@@ -134,7 +134,7 @@ details.fold>.body>.grid{gap:12px}
 <div id="toast"></div>
 <script>
 "use strict";
-var START_TOTAL=52253, CAR_TOTAL=75500;
+var START_TOTAL=52253+17876+5264, CAR_TOTAL=75500;
 /* Everyday spending is a flat $30 a day — groceries, gas, anything unplanned.
    Each day after today reserves exactly $30, no more, no less. Whatever you
    do not spend today is not spread onto tomorrow: it simply stays in the
@@ -267,6 +267,13 @@ var SEED=[
  ["AFFIRM AMZN 2",484,24.71,109,23,"BNPL",0],["UPSTART 3",2676,0.0,243,22,"LOAN",0],
  ["BEST BUY",997,31.99,40,8,"CARD",1150],["KLARNA",1338,34.99,213,17,"BNPL",0],
  ["UPGRADE",2314,26.00,170,21,"LOAN",0],
+ /* Tax debt. IRS: $17,876.24 owed for tax year 2025 as of 15 Sep 2026, $530 a
+    month on an installment agreement, drafts on the 29th. APR 10 = the IRS
+    underpayment rate (~7%) plus the 0.25%/month failure-to-pay penalty that
+    keeps running during a plan. Utah: 12-month plan of $752 from 21 Apr 2026,
+    so seven payments ($5,264) left, Sep 2026 through Mar 2027; interest is
+    built into the plan, so APR 0. */
+ ["IRS 2025",17876,10.0,530,29,"LOAN",0],["UTAH TAX PLAN",5264,0.0,752,21,"LOAN",0],
  ["ALLY",34975,1.99,905,28,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
 
 /* Open cards with nothing on them. They never draft and they are not debt,
@@ -289,7 +296,7 @@ var FLOW=[[1,"RENT",-3000],[1,"CAP ONE VENTURE",-25],[1,"AFFIRM AMZN 4",-54],[1,
 [7,"SPARROW",-42],[8,"BEST BUY",-40],[9,"AMEX ADACY",-40],[12,"USAA",-45],[12,"UTILITIES",-375],
 [17,"KLARNA",-213],[21,"UPGRADE",-170],
 [15,"CAP ONE SAVOR",-40],[15,"CREDIT ONE",-40],[15,"SEEN",-55],[17,"CHASE",-230],
-[20,"CITI COSTCO",-120],[21,"FEDERAL TAX",-530],[21,"STATE TAX",-752],[22,"PAYCHECK 2",5800],
+[20,"CITI COSTCO",-120],[21,"UTAH TAX PLAN",-752],[29,"IRS 2025",-530],[22,"PAYCHECK 2",5800],
 [22,"PAYPAL",-32],[22,"UPSTART 3",-243],[22,"AFFIRM AMZN 1",-43],[23,"AFFIRM AMZN 2",-109],
 [25,"CHARIZARD",-144],[25,"CAR INSURANCE",-230],[27,"AFFIRM AMZN 3",-51],[28,"UPSTART 2",-425],
 [16,"CONCORA CARD FEES",-10],[28,"ALLY",-905],[28,"PHONE",-180],[29,"TOYOTA FINANCIAL",-769],[30,"APPLE CARD",-20]];
@@ -436,7 +443,9 @@ function rank(p,q){
   var pc=isCard(p)?1:0,qc=isCard(q)?1:0;
   if(pc!==qc)return qc-pc;
   if(pc)return util(q)-util(p)||q.current*q.apr-p.current*p.apr;
-  return q.current*q.apr-p.current*p.apr;
+  /* Loans: highest APR first, so a big low-rate debt (the IRS plan at ~10%)
+     never jumps ahead of a smaller 26-36% loan. Ties go to the bigger bleed. */
+  return (q.apr-p.apr)||(q.current*q.apr-p.current*p.apr);
 }
 function targetAccount(){
   var live=planAccounts().filter(function(x){return x.current>0;}).sort(rank);
@@ -1653,7 +1662,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-15T23:15";
+var BUILD="2026-09-16T00:10";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
