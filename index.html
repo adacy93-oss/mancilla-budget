@@ -344,15 +344,22 @@ function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"
 function parseYmd(k){var p=String(k||BAL_ASOF).split("-");return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
 function typedBal(s){return Math.max(0,Number(state.accounts[s[0]]!=null?state.accounts[s[0]]:s[1]));}
 function confirmBal(name){state.acctAt=state.acctAt||{};state.acctAt[name]=ymd(new Date());}
-function estimates(){
-  if(_est)return _est;
-  var at=state.acctAt||{}, today=new Date();today.setHours(0,0,0,0);
+/* One day-by-day walk of every account from its confirmed date up to `end`.
+   Records, for each month it passes through, the balances going into that
+   month and exactly where that month's extra payment went — so a card the
+   extra clears in October stops getting extra (and stops drafting) after. */
+function walk(end){
+  var at=state.acctAt||{};
   var A=SEED.map(function(s){var f=parseYmd(at[s[0]]);
     return {name:s[0],apr:s[2],min:s[3],day:s[4],kind:s[5],limit:s[6]||0,noplan:!!NOPLAN[s[0]],
             bal:typedBal(s),from:f,moved:false,paid:0,interest:0};});
-  var start=A.reduce(function(m,x){return x.from<m?x.from:m;},today);
+  var start=A.reduce(function(m,x){return x.from<m?x.from:m;},end);
+  var months={}, mk=function(d){return d.getFullYear()*12+d.getMonth();};
+  function snap(d){var k=mk(d);if(!months[k]){var o={};A.forEach(function(x){o[x.name]=x.bal;});months[k]={start:o,extras:[]};}return months[k];}
   var d=new Date(start);d.setDate(d.getDate()+1);
-  for(var g=0;d<=today&&g<800;g++,d.setDate(d.getDate()+1)){
+  snap(new Date(start.getFullYear(),start.getMonth(),1));
+  for(var g=0;d<=end&&g<1200;g++,d.setDate(d.getDate()+1)){
+    var M=snap(d);
     var dom=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
     A.forEach(function(x){
       if(d<=x.from||x.bal<=0)return;
@@ -366,11 +373,25 @@ function estimates(){
         .map(function(x){return {ref:x,current:x.bal,apr:x.apr,kind:x.kind,limit:x.limit};})
         .sort(rank);
       for(var j=0;j<live.length&&pool>0.005;j++){var x=live[j].ref,p=Math.min(pool,x.bal);
-        x.bal-=p;x.paid+=p;pool-=p;x.moved=true;if(x.bal<0.5)x.bal=0;}
+        x.bal-=p;x.paid+=p;pool-=p;x.moved=true;if(x.bal<0.5)x.bal=0;
+        if(p>=0.5)M.extras.push([x.name,Math.round(p)]);}
     }
   }
-  _est={};A.forEach(function(x){_est[x.name]=x;});
+  var by={};A.forEach(function(x){by[x.name]=x;});
+  return {acct:by,months:months};
+}
+function estimates(){
+  if(_est)return _est;
+  var today=new Date();today.setHours(0,0,0,0);
+  _est=walk(today).acct;
   return _est;
+}
+var _proj=null;
+function projection(){
+  if(_proj)return _proj;
+  var end=new Date();end.setHours(0,0,0,0);end.setDate(end.getDate()+HORIZON+35);
+  _proj=walk(end).months;
+  return _proj;
 }
 function accounts(){var E=estimates();return SEED.map(function(s){var e=E[s[0]];
   return {name:s[0],start:s[1],apr:s[2],min:s[3],day:s[4],kind:s[5],limit:s[6]||0,
@@ -461,7 +482,7 @@ function simMinOnly(list){
 }
 
 var _plan=null,_cars=null,_mono=null,_flow=null;
-function bust(){_plan=null;_cars=null;_mono=null;_flow=null;_est=null;}
+function bust(){_plan=null;_cars=null;_mono=null;_flow=null;_est=null;_proj=null;}
 
 function plan(){
   if(_plan)return _plan;
@@ -554,17 +575,23 @@ function liveFlow(when){
   var fk=when.getFullYear()*12+when.getMonth();
   _flow=_flow||{};
   if(_flow[fk])return _flow[fk];
-  var out=[];
+  var out=[], P=projection()[fk], E=estimates();
+  /* Drafts: an account drafts in a month only if it still has a balance going
+     into that month, and never more than what is left. */
+  var startBal=function(n){return P?Math.max(0,P.start[n]||0):Math.max(0,(E[n]||{bal:0}).bal);};
   FLOW.forEach(function(f){
     if(!ISACCT[f[1]]){out.push(f);return;}
-    var b=Math.max(0,(estimates()[f[1]]||{bal:0}).bal);
+    var b=startBal(f[1]);
     if(b<=0)return;
     out.push([f[0],f[1],-Math.min(Math.abs(f[2]),Math.round(b))]);
   });
-  var tg=targetAccount();
-  if(tg){
-    var amt=Math.min(extraFor(when),Math.max(0,Math.round(tg.current-tg.min)));
-    if(amt>0)out.push([EXTRA_DAY,"EXTRA → "+tg.name,-amt]);
+  /* The extra, split exactly the way it will actually land that month. */
+  if(P&&P.extras.length){
+    P.extras.forEach(function(e){out.push([EXTRA_DAY,"EXTRA \u2192 "+e[0],-e[1]]);});
+  } else if(!P){
+    var tg=targetAccount();
+    if(tg){var amt=Math.min(extraFor(when),Math.max(0,Math.round(tg.current)));
+      if(amt>0)out.push([EXTRA_DAY,"EXTRA \u2192 "+tg.name,-amt]);}
   }
   out.sort(function(a,b){return a[0]-b[0]||a[2]-b[2];});
   _flow[fk]=out;return out;
@@ -795,7 +822,9 @@ function viewNow(){
     var neg=d.bal<0,drip=d.drip,catchup=drip<VAR_DAILY-0.5;
     function line(name,amt,kind,it0){ /* kind: "in", "out", "drip" */
       var sk=it0&&it0.skipped;
-      var col=sk?"var(--dim)":kind==="in"?"var(--green)":kind==="drip"?"var(--dim)":"var(--tx)",w=kind==="in"?"700":"400",it=kind==="drip"?"font-style:italic;":"";
+      var isX=!!(it0&&/^EXTRA/.test(it0.name));
+      if(isX)name="+ "+esc(it0.name.replace(/^EXTRA\s*\u2192\s*/,""));
+      var col=sk?"var(--dim)":isX?"#FFD60A":kind==="in"?"var(--green)":kind==="drip"?"var(--dim)":"var(--tx)",w=isX?"800":kind==="in"?"700":"400",it=kind==="drip"?"font-style:italic;":"";
       var strike=sk?";text-decoration:line-through":"";
       var label=kind==="out"&&it0?
         '<button data-skip="'+esc(it0.key)+'" aria-label="'+(sk?"Undo paid early: ":"Mark paid early: ")+name+'" style="all:unset;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:'+col+';font-weight:'+w+strike+'">'+
@@ -866,7 +895,7 @@ function viewNow(){
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
     '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next two months</div>'+
     '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div>'+
-    '<div class="note" style="margin-top:6px;color:var(--tx)"><b>Already paid a bill early?</b> Tap its name to take it off that month \u2014 it comes back next month. Tap again to undo.</div></div>'+
+    '<div class="note" style="margin-top:6px;color:var(--tx)"><b style="color:#FFD60A">Yellow</b> rows are extra payments, split across accounts the way they will actually land. <b>Already paid a bill early?</b> Tap its name to take it off that month \u2014 it comes back next month. Tap again to undo.</div></div>'+
     bills+'</div></div>';
 }
 
@@ -985,8 +1014,8 @@ function viewMonth(){
     xl+='<text x="'+xv(d)+'" y="'+(H-6)+'" text-anchor="middle" font-size="9.5" fill="#6E6E6E" font-family="var(--mono)">'+d+'</text>';});
   var rows=tr.map(function(t){
     return '<tr><td class="num" style="width:40px;color:var(--dim)">'+t.day+'</td>'+
-     '<td style="'+(t.amt>0?"font-weight:700;color:var(--green)":"")+'">'+esc(t.name)+'</td>'+
-     '<td class="num" style="color:'+(t.amt>0?"var(--green)":"var(--mut)")+'">'+(t.amt>0?"+":"−")+money(t.amt)+'</td>'+
+     '<td style="'+(t.amt>0?"font-weight:700;color:var(--green)":/^EXTRA/.test(t.name)?"font-weight:800;color:#FFD60A":"")+'">'+esc(t.name)+'</td>'+
+     '<td class="num" style="color:'+(t.amt>0?"var(--green)":/^EXTRA/.test(t.name)?"#FFD60A;font-weight:800":"var(--mut)")+'">'+(t.amt>0?"+":"−")+money(t.amt)+'</td>'+
      '<td class="num" style="font-weight:700;width:92px;color:'+(t.bal<0?"var(--red)":"var(--tx)")+'">'+signed(t.bal)+'</td></tr>';}).join("");
   var t=totals();
   var av=planAccounts().filter(function(x){return x.name==="AFFIRM VIRTUAL"&&x.current>0;}).length>0;
