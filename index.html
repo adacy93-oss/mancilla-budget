@@ -208,7 +208,27 @@ function disabilityPayOn(d){
    that goes to debt rather than to bills — $700, the amount that clears the
    plan inside twelve months. The other $1,000 stays in checking. */
 var EXTRA_BASE=515, DIS_TO_DEBT=700;
-function extraFor(d){return EXTRA_BASE+(d>=DIS_START?DIS_TO_DEBT:0);}
+
+/* Post-9/11 GI Bill housing allowance for the Fall 2026 semester at SLCC.
+   $2,000 paid on the 1st, one month behind: Oct, Nov and Dec 2026 only.
+   The small prorated payment for early December (Jan 1) is NOT counted, and
+   spring is NOT assumed — nothing from the GI Bill exists after Dec 2026.
+   A GI Bill payment is treated as landing on the 1st or the next banking
+   day, the later of the two, so the forecast never counts it early.
+   October: $1,000 stays in checking as a cushion against overdrafts, $1,000
+   goes to debt. November and December: all $2,000 to debt. */
+var GI_BILL=[[2026,9,2000,1000],[2026,10,2000,2000],[2026,11,2000,2000]];
+function giFor(d){for(var i=0;i<GI_BILL.length;i++){var g=GI_BILL[i];
+  if(d.getFullYear()===g[0]&&d.getMonth()===g[1])return {amt:g[2],debt:g[3]};}
+  return null;}
+function giDay(y,m){var d=new Date(y,m,1),g=0;
+  while(!isBankDay(d)&&g++<12)d.setDate(d.getDate()+1);
+  return d;}
+function giPayOn(d){var g=giFor(d);if(!g)return 0;
+  var p=giDay(d.getFullYear(),d.getMonth());
+  return p.getDate()===d.getDate()?g.amt:0;}
+function extraFor(d){var g=giFor(d);
+  return EXTRA_BASE+(d>=DIS_START?DIS_TO_DEBT:0)+(g?g.debt:0);}
 function extraThisMonth(){return extraFor(new Date());}
 function thisMonthKey(){var d=new Date();return MONLBL[d.getMonth()]+" "+d.getFullYear();}
 
@@ -484,8 +504,11 @@ function dripFor(d){var n=new Date();
    drafts, and an account with less left than its minimum only drafts what is
    left. The extra payment is included too — it is real money leaving the
    account on the 23rd. */
-function liveFlow(){
-  if(_flow)return _flow;
+function liveFlow(when){
+  when=when||new Date();
+  var fk=when.getFullYear()*12+when.getMonth();
+  _flow=_flow||{};
+  if(_flow[fk])return _flow[fk];
   var out=[];
   FLOW.forEach(function(f){
     if(!ISACCT[f[1]]){out.push(f);return;}
@@ -495,15 +518,17 @@ function liveFlow(){
   });
   var tg=targetAccount();
   if(tg){
-    var amt=Math.min(extraThisMonth(),Math.max(0,Math.round(tg.current-tg.min)));
+    var amt=Math.min(extraFor(when),Math.max(0,Math.round(tg.current-tg.min)));
     if(amt>0)out.push([EXTRA_DAY,"EXTRA → "+tg.name,-amt]);
   }
   out.sort(function(a,b){return a[0]-b[0]||a[2]-b[2];});
-  _flow=out;return out;
+  _flow[fk]=out;return out;
 }
 function flowEvents(d){
-  var dis=disabilityPayOn(d);
-  return dis?liveFlow().concat([[d.getDate(),"DISABILITY",dis]]):liveFlow();}
+  var dis=disabilityPayOn(d), gi=giPayOn(d), ev=liveFlow(d);
+  if(dis)ev=ev.concat([[d.getDate(),"DISABILITY",dis]]);
+  if(gi)ev=ev.concat([[d.getDate(),"GI BILL HOUSING",gi]]);
+  return ev;}
 function forecast(startBal,days){
   var t0=new Date();t0.setHours(0,0,0,0);
   var bal=Number(startBal)||0,out=[];
@@ -530,7 +555,8 @@ function disNote(){
   while(p<n||new Date(p.getFullYear(),p.getMonth(),1)<DIS_START){
     i++;p=disabilityDay(n.getFullYear(),n.getMonth()+i);if(i>14)break;}
   return 'Disability of '+money(DISABILITY)+' is paid for the 1st of each month from Oct 2026. When the 1st is a weekend or a federal holiday it lands the banking day before, never after \u2014 next one <b>'+fmtDate(p)+'</b>. '+
-    money(DIS_TO_DEBT)+' of it goes to debt; the rest stays here for bills.';
+    money(DIS_TO_DEBT)+' of it goes to debt; the rest stays here for bills.'+
+    ' GI Bill housing of $2,000 lands Oct 1, Nov 2 and Dec 1 2026 for the fall semester only \u2014 October keeps $1,000 here as a cushion and sends $1,000 to debt, November and December send all of it. Nothing from the GI Bill is counted after December.';
 }
 
 function tile(icon,col,label,val,note,valcol){
@@ -873,6 +899,8 @@ function viewMonth(){
     var early=dd.getMonth()!==nw.getMonth();
     ev=ev.concat([[early?1:dd.getDate(),"DISABILITY"+(early?" (paid "+MONN[dd.getMonth()]+" "+dd.getDate()+")":""),DISABILITY]]);
   }
+  var gm=giFor(nw);
+  if(gm)ev=ev.concat([[giDay(nw.getFullYear(),nw.getMonth()).getDate(),"GI BILL HOUSING",gm.amt]]);
   ev.sort(function(a,b){return a[0]-b[0]||a[2]-b[2];});
   var bal=0,tr=ev.map(function(f){bal+=f[2];return {day:f[0],name:f[1],amt:f[2],bal:bal};});
   var lo=Math.min.apply(null,tr.map(function(t){return t.bal;}).concat([0]));
