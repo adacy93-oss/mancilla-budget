@@ -387,6 +387,7 @@ function walk(end){
     var dom=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
     A.forEach(function(x){
       if(d<=x.from||x.bal<=0)return;
+      if(isSkipped(d,x.name))return; /* marked paid early: already inside the balance */
       if(!(x.day===dom||(x.day>last&&dom===last)))return;
       var it=x.bal*x.apr/100/12;x.bal+=it;x.interest+=it;
       var pay=Math.min(x.min,x.bal);x.bal-=pay;x.paid+=pay;x.moved=true;
@@ -1433,6 +1434,7 @@ function gsPull(){
       if(rr>lr){
         state={accounts:Object.assign(defaults(),d.accounts||{}),acctAt:d.acctAt||{},cash:d.cash||{balance:0,updated:null},
                history:d.history||[],spend:d.spend||[],skipped:d.skipped||[],rev:rr};
+        if(migrateSkips()){save();}
         try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
         if(!document.activeElement||document.activeElement.tagName!=="INPUT")render();
       } else if(rr<lr){gsPush();}
@@ -1662,7 +1664,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T00:25";
+var BUILD="2026-09-16T00:50";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
@@ -1677,7 +1679,16 @@ function checkBuild(){
 document.addEventListener("visibilitychange",function(){if(!document.hidden)checkBuild();});
 setInterval(function(){if(!document.hidden)checkBuild();},60000);
 setTimeout(checkBuild,1500);
-load();render();if(!PRIVATE)gsPull();
+/* Bills that were renamed keep their "paid early" marks. */
+var RENAMED={"FEDERAL TAX":"IRS 2025","STATE TAX":"UTAH TAX PLAN"};
+function migrateSkips(){
+  var ch=false;
+  state.skipped=(state.skipped||[]).map(function(k){var p=k.split("|");
+    if(RENAMED[p[1]]){ch=true;return p[0]+"|"+RENAMED[p[1]];}return k;})
+    .filter(function(k,i,a){return a.indexOf(k)===i;});
+  return ch;
+}
+load();if(migrateSkips())save();render();if(!PRIVATE)gsPull();
 </script>
 </body>
 </html>
