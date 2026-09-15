@@ -517,9 +517,20 @@ function plan(){
   _plan=simulate(list,function(d){return BASE_MIN+extraFor(d);},420);
   return _plan;
 }
+/* HOUSE FUND. The goal is buying a house by December 2027 on a VA loan. Once
+   the plan is debt-free, the whole monthly debt outlay stops going to the cars
+   and is saved for closing costs and reserves instead, from the month after
+   payoff through HOUSE_BY. Only after that do the cars get the extra. */
+var HOUSE_BY=new Date(2027,11,1);
+function houseFund(){
+  var p=plan(), start=p.zeroIdx+1, end=mi(HOUSE_BY), total=0, n=0, first=null;
+  for(var i=start;i<=end;i++){var k=ORIGIN_Y*12+ORIGIN_M+i,d=new Date(Math.floor(k/12),k%12,1);
+    total+=BASE_MIN+extraFor(d);n++;if(!first)first=d;}
+  return {total:total,months:n,first:first,monthly:n?total/n:0};
+}
 function cars(){
   if(_cars)return _cars;
-  var z=plan().zeroIdx;
+  var z=Math.max(plan().zeroIdx,mi(HOUSE_BY)+1);
   var list=carAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min};});
   _cars=simulate(list,function(d,k){return CAR_MIN+(k>=z?BASE_MIN+extraFor(d):0);},420);
   return _cars;
@@ -763,6 +774,7 @@ function viewDescent(){
 
   '<div class="tiles">'+
     tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
+    tile("⌂","#22C55E","House fund by Dec 2027",(function(){var h=houseFund();return h.months?money(h.total):"—";})(),(function(){var h=houseFund();return h.months?money(h.monthly)+"/mo saved "+MONN[h.first.getMonth()]+"–Dec 2027, once debt-free":"plan isn\u2019t debt-free before Dec 2027";})(),"#22C55E")+
     tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
     tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
     tile("↑","#FFD60A","Next extra payment",money(nx.amt),MONN[nx.date.getMonth()]+" "+nx.date.getDate()+" · "+nx.parts.join(" + "),"#FFD60A")+
@@ -1664,7 +1676,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T00:50";
+var BUILD="2026-09-16T01:20";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
