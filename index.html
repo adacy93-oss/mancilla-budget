@@ -731,7 +731,12 @@ function viewDescent(){
 
   /* where the original plan said you would be this month, vs where you are */
   var bnow=null;base.forEach(function(q){if(q.i===nowIdx())bnow=q.v;});
-  var vsPlan=bnow==null?null:Math.round(bnow-t.remaining);
+  /* The Aug 2026 plan never included the IRS and Utah tax plans (added Sep
+     2026), so they are left out of this comparison — otherwise adding real
+     debt reads as falling behind. */
+  var LATER={"IRS 2025":1,"UTAH TAX PLAN":1};
+  var laterBal=planAccounts().filter(function(x){return LATER[x.name];}).reduce(function(a,x){return a+Math.max(0,x.current);},0);
+  var vsPlan=bnow==null?null:Math.round(bnow-(t.remaining-laterBal));
 
   var rows=a.map(function(x){x.gone=goneBy(x.name);x.i=x.gone==="—"?-1:mi(new Date(Number(x.gone.split(" ")[1]),MONLBL.indexOf(x.gone.split(" ")[0]),1));return x;})
     .filter(function(x){return x.i>-1;}).sort(function(q,r){return q.i-r.i||r.start-q.start;});
@@ -762,7 +767,7 @@ function viewDescent(){
     '</div>'+
     '<div class="note">Plus '+money(carB)+' in car loans — '+money(t.remaining+carB)+' all in.</div>'+
     (vsPlan!==null?'<div class="note" style="margin-top:4px;color:'+(vsPlan>=0?"var(--green)":"var(--amber)")+'">'+
-      (vsPlan>=0?money(vsPlan)+" ahead of":money(vsPlan)+" behind")+' the original Aug 2026 plan for '+thisMonthKey()+'.</div>':'')+
+      (vsPlan>=0?money(vsPlan)+" ahead of":money(vsPlan)+" behind")+' the original Aug 2026 plan for '+thisMonthKey()+(laterBal>0?' (not counting the '+money(laterBal)+' of tax plans added since)':'')+'.</div>':'')+
     '<div class="mini" style="margin-top:14px"><i style="width:'+t.pct+'%;background:linear-gradient(90deg,var(--violet),var(--cyan))"></i></div>'+
   '</div>'+
 
@@ -1685,7 +1690,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T10:00";
+var BUILD="2026-09-16T22:15";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
