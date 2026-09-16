@@ -509,7 +509,7 @@ function simMinOnly(list){
 }
 
 var _plan=null,_cars=null,_mono=null,_flow=null;
-function bust(){_plan=null;_cars=null;_mono=null;_flow=null;_est=null;_proj=null;}
+function bust(){_plan=null;_cars=null;_cars2=null;_mono=null;_flow=null;_est=null;_proj=null;}
 
 function plan(){
   if(_plan)return _plan;
@@ -517,24 +517,33 @@ function plan(){
   _plan=simulate(list,function(d){return BASE_MIN+extraFor(d);},420);
   return _plan;
 }
-/* HOUSE FUND. The goal is buying a house by December 2027 on a VA loan. Once
-   the plan is debt-free, the whole monthly debt outlay stops going to the cars
-   and is saved for closing costs and reserves instead, from the month after
-   payoff through HOUSE_BY. Only after that do the cars get the extra. */
-var HOUSE_BY=new Date(2027,11,1);
+/* HOUSE PLAN — option B (chosen 16 Sep 2026). Once the plan is debt-free the
+   whole monthly debt outlay goes to the Toyota loan (8.01%) until it is gone.
+   From the month after that, the outlay plus the freed Toyota payment is saved
+   in a house fund through HOUSE_BY (June 2028 — two years at Murdock). Only
+   after that does the Ally loan (1.99%) get anything beyond its minimum. */
+var HOUSE_BY=new Date(2028,5,1), FAST_CAR="TOYOTA FINANCIAL";
+var _cars2=null;
+function carPlan(){
+  if(_cars2)return _cars2;
+  var z=plan().zeroIdx, hb=mi(HOUSE_BY);
+  var all=carAccounts();
+  var fast=all.filter(function(x){return x.name===FAST_CAR;}).map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min};});
+  var slow=all.filter(function(x){return x.name!==FAST_CAR;}).map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min};});
+  var fastMin=fast.reduce(function(a,x){return a+x.min;},0), slowMin=slow.reduce(function(a,x){return a+x.min;},0);
+  var f=simulate(fast,function(d,k){return fastMin+(k>=z?BASE_MIN+extraFor(d):0);},420);
+  var sl=simulate(slow,function(d,k){return slowMin+(k>hb?BASE_MIN+extraFor(d)+fastMin:0);},420);
+  var payoff={};Object.keys(f.payoff).forEach(function(n){payoff[n]=f.payoff[n];});Object.keys(sl.payoff).forEach(function(n){payoff[n]=sl.payoff[n];});
+  _cars2={fast:f,slow:sl,fastMin:fastMin,payoff:payoff,zeroIdx:Math.max(f.zeroIdx,sl.zeroIdx),done:f.done&&sl.done,interest:f.interest+sl.interest};
+  return _cars2;
+}
 function houseFund(){
-  var p=plan(), start=p.zeroIdx+1, end=mi(HOUSE_BY), total=0, n=0, first=null;
+  var cp=carPlan(), start=(cp.fast.done?cp.fast.zeroIdx:plan().zeroIdx)+1, end=mi(HOUSE_BY), total=0, n=0, first=null;
   for(var i=start;i<=end;i++){var k=ORIGIN_Y*12+ORIGIN_M+i,d=new Date(Math.floor(k/12),k%12,1);
-    total+=BASE_MIN+extraFor(d);n++;if(!first)first=d;}
-  return {total:total,months:n,first:first,monthly:n?total/n:0};
+    total+=BASE_MIN+extraFor(d)+cp.fastMin;n++;if(!first)first=d;}
+  return {total:total,months:n,first:first,monthly:n?total/n:0,toyotaGone:cp.fast.done?keyFromMi(cp.fast.zeroIdx):null};
 }
-function cars(){
-  if(_cars)return _cars;
-  var z=Math.max(plan().zeroIdx,mi(HOUSE_BY)+1);
-  var list=carAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min};});
-  _cars=simulate(list,function(d,k){return CAR_MIN+(k>=z?BASE_MIN+extraFor(d):0);},420);
-  return _cars;
-}
+function cars(){ return carPlan(); }
 function minOnly(){
   if(_mono)return _mono;
   _mono=simMinOnly(planAccounts().map(function(x){return {bal:x.current,apr:x.apr,min:x.min,kind:x.kind};}));
@@ -774,7 +783,7 @@ function viewDescent(){
 
   '<div class="tiles">'+
     tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
-    tile("⌂","#22C55E","House fund by Dec 2027",(function(){var h=houseFund();return h.months?money(h.total):"—";})(),(function(){var h=houseFund();return h.months?money(h.monthly)+"/mo saved "+MONN[h.first.getMonth()]+"–Dec 2027, once debt-free":"plan isn\u2019t debt-free before Dec 2027";})(),"#22C55E")+
+    tile("⌂","#22C55E","House fund by Jun 2028",(function(){var h=houseFund();return h.months?money(h.total):"—";})(),(function(){var h=houseFund();return h.months?"Toyota paid off "+h.toyotaGone+", then "+money(h.monthly)+"/mo saved "+MONN[h.first.getMonth()]+"–Jun 2028":"Toyota isn\u2019t paid off before Jun 2028";})(),"#22C55E")+
     tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
     tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
     tile("↑","#FFD60A","Next extra payment",money(nx.amt),MONN[nx.date.getMonth()]+" "+nx.date.getDate()+" · "+nx.parts.join(" + "),"#FFD60A")+
@@ -1089,7 +1098,7 @@ function viewAccounts(){
      '<div class="scroll"><table style="min-width:700px">'+acctHead()+'<tbody>'+a.map(acctRow).join("")+'</tbody></table></div></div>'+
    '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
      '<div style="font-size:14px;font-weight:700">Car loans · '+money(carB)+'</div>'+
-     '<div class="note">Outside the plan. They take their minimums until '+(p.done?keyFromMi(p.zeroIdx):"the plan clears")+', then everything redirects and they clear by '+(c.done?keyFromMi(c.zeroIdx):"—")+'.</div></div>'+
+     '<div class="note">Outside the plan. They take their minimums until '+(p.done?keyFromMi(p.zeroIdx):"the plan clears")+', then everything goes to the Toyota loan, then the house fund through Jun 2028, then the Ally loan; they clear by '+(c.done?keyFromMi(c.zeroIdx):"—")+'.</div></div>'+
      '<div class="scroll"><table style="min-width:700px">'+acctHead()+'<tbody>'+cars_.map(acctRow).join("")+'</tbody></table></div></div></div>';
 }
 
@@ -1676,7 +1685,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T09:00";
+var BUILD="2026-09-16T10:00";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
