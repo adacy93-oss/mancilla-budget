@@ -675,7 +675,7 @@ function forecast(startBal,days,addFn){
 }
 /* How far ahead the cash forecast looks. Two full months, so the next
    rent and the one after it are both inside the window. */
-var HORIZON=62;
+var HORIZON=92;
 function troughOf(bal,addFn){var f=forecast(bal,HORIZON,addFn),t={bal:Number(bal)||0,date:null};
   f.forEach(function(d){if(d.bal<t.bal)t={bal:d.bal,date:d.date};});return {fc:f,tr:t};}
 
@@ -874,7 +874,7 @@ function monthlyVerdict(P){
   var add=function(d){return d>=start?[[day,"NEW PAYMENT",-P]]:[];};
   var bal=workingBalance(), tr=state.cash.updated?troughOf(bal,add).tr:null;
   var steadyCut=Math.max(0,P-Math.max(0,steady));
-  var cash=tr?' Over the next two months, with nothing else changed, your lowest day would be <b class="num">'+signed(tr.bal)+'</b>'+(tr.date?' on <b>'+fmtDate(tr.date)+'</b>':'')+'.':'';
+  var cash=tr?' Over the next three months, with nothing else changed, your lowest day would be <b class="num">'+signed(tr.bal)+'</b>'+(tr.date?' on <b>'+fmtDate(tr.date)+'</b>':'')+'.':'';
   var head='A normal month (from '+MONN[steadyD.getMonth()]+' '+steadyD.getFullYear()+') leaves about <b class="num">'+signed(steady)+'</b> after every bill, minimum, the '+money(extraFor(steadyD))+' extra and $'+VAR_DAILY+' a day. ';
   if(worst>0.5)
     return verdictBox("NO","var(--red)",head+money(P)+'/mo is <b class="num">'+money(worst)+'</b> more than you have in '+MONN[worstD.getMonth()]+' '+worstD.getFullYear()+' even with no extra payments at all.'+cash);
@@ -892,7 +892,7 @@ function spendVerdict(){
 }
 function onceVerdict(){
   var amt=Math.max(0,Number(spendTest)||0);
-  if(!amt)return '<p class="note" style="margin:12px 0 0">Type an amount or tap one. I\'ll check it against every bill in the next two months, up to your thinnest day.</p>';
+  if(!amt)return '<p class="note" style="margin:12px 0 0">Type an amount or tap one. I\'ll check it against every bill in the next three months, up to your thinnest day.</p>';
   if(!state.cash.updated)return '<p class="note" style="margin:12px 0 0">Put your Chase balance in first — I can\'t answer without it.</p>';
   var bal=workingBalance(), o=troughOf(bal-amt), base=troughOf(bal);
   var ok=o.tr.bal>=0, tight=ok&&o.tr.bal<200;
@@ -1018,7 +1018,7 @@ function viewNow(){
   '</div>'+
 
   '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
-    '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next two months</div>'+
+    '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next three months</div>'+
     '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div>'+
     '<div class="note" style="margin-top:6px;color:var(--tx)"><b style="color:#FFD60A">Yellow</b> rows are extra payments, split across accounts the way they will actually land. <b>Already paid a bill early?</b> Tap its name to take it off that month \u2014 it comes back next month. Tap again to undo.</div></div>'+
     bills+'</div></div>';
@@ -1690,7 +1690,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T22:15";
+var BUILD="2026-09-16T22:40";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
