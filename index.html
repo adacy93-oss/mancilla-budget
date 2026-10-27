@@ -679,8 +679,14 @@ function liveFlow(when){
 /* Rent is due the 1st, but when the 1st is a weekend or a holiday it goes
    out on the next banking day. */
 function rentDay(y,m){var r=new Date(y,m,1),g=0;while(!isBankDay(r)&&g++<12)r.setDate(r.getDate()+1);return r;}
+/* Bills that only run for a set number of months.
+   [day, name, amount, first month (y, m0), last month (y, m0)]. */
+var TEMP_BILLS=[[18,"RO",-299,2026,10,2027,0]];
+function tempBills(d){var k=d.getFullYear()*12+d.getMonth();
+  return TEMP_BILLS.filter(function(b){return k>=b[3]*12+b[4]&&k<=b[5]*12+b[6];})
+    .map(function(b){return [b[0],b[1],b[2]];});}
 function flowEvents(d){
-  var dis=disabilityPayOn(d), gi=giPayOn(d), ev=liveFlow(d);
+  var dis=disabilityPayOn(d), gi=giPayOn(d), ev=liveFlow(d).concat(tempBills(d));
   var rd=rentDay(d.getFullYear(),d.getMonth());
   if(rd.getDate()!==1){
     var rent=ev.filter(function(f){return f[1]==="RENT";});
@@ -1736,7 +1742,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-10-26T22:00";
+var BUILD="2026-10-26T22:10";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
