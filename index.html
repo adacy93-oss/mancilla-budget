@@ -230,8 +230,40 @@ function giDay(y,m){var d=new Date(y,m,1),g=0;
 function giPayOn(d){var g=giFor(d);if(!g)return 0;
   var p=giDay(d.getFullYear(),d.getMonth());
   return p.getDate()===d.getDate()?g.amt:0;}
-function extraFor(d){var g=giFor(d);
+function plannedExtra(d){var g=giFor(d);
   return EXTRA_BASE+(d>=DIS_START?DIS_TO_DEBT:0)+(g?g.debt:0);}
+/* The extra only ever sends what is left once every bill is covered. If the
+   Chase balance you type means checking would dip under EXTRA_FLOOR before the
+   next extra payment, that month's extra is cut by just enough to stay above
+   it. The cut is recalculated every time anything changes, so the extra goes
+   straight back to full once the money is there. _cuts is month key -> amount
+   held back. */
+var EXTRA_FLOOR=100, _cuts={};
+function heldBack(d){return Math.min(plannedExtra(d),_cuts[d.getFullYear()*12+d.getMonth()]||0);}
+function extraFor(d){return Math.max(0,plannedExtra(d)-heldBack(d));}
+function computeCuts(){
+  _cuts={};bust();
+  if(!state.cash||!state.cash.updated)return;
+  var bal=workingBalance();
+  for(var pass=0;pass<8;pass++){
+    var fc=forecast(bal,HORIZON),idx=[],changed=false;
+    fc.forEach(function(x,i){if(x.date.getDate()===EXTRA_DAY)idx.push(i);});
+    for(var j=0;j<idx.length&&!changed;j++){
+      var a=idx[j],b=j+1<idx.length?idx[j+1]:fc.length,lo=Infinity;
+      for(var i=a;i<b;i++)lo=Math.min(lo,fc[i].bal);
+      var d=fc[a].date,k=d.getFullYear()*12+d.getMonth(),have=extraFor(d);
+      if(lo<EXTRA_FLOOR-0.5&&have>0){
+        _cuts[k]=(_cuts[k]||0)+Math.min(have,Math.ceil((EXTRA_FLOOR-lo)/10)*10);changed=true;}
+    }
+    bust();
+    if(!changed)break;
+  }
+}
+/* Extra payments inside the forecast window that are being held back. */
+function cutList(){var out=[],n=new Date();n.setHours(0,0,0,0);
+  for(var m=0;m<4;m++){var d=new Date(n.getFullYear(),n.getMonth()+m,EXTRA_DAY);
+    if(d<=n)continue;var h=heldBack(d);if(h>0.5)out.push({date:d,held:h,sent:extraFor(d),planned:plannedExtra(d)});}
+  return out;}
 function extraThisMonth(){return extraFor(new Date());}
 /* The next extra payment that has not gone out yet: its date, the amount, what
    that amount is made of, and exactly how it splits across accounts. */
@@ -243,6 +275,7 @@ function nextExtra(){
   var parts=[money(EXTRA_BASE)+" base"];
   if(d>=DIS_START)parts.push(money(DIS_TO_DEBT)+" disability");
   if(g&&g.debt)parts.push(money(g.debt)+" GI Bill");
+  var hb=heldBack(d);if(hb>0.5)parts.push("\u2212 "+money(hb)+" held back for bills");
   var split=P?P.extras.slice().sort(function(a,b){return b[1]-a[1];}):[];
   var before=P?P.start:{};
   return {date:d,amt:extraFor(d),parts:parts,split:split,before:before,
@@ -643,8 +676,17 @@ function liveFlow(when){
   out.sort(function(a,b){return a[0]-b[0]||a[2]-b[2];});
   _flow[fk]=out;return out;
 }
+/* Rent is due the 1st, but when the 1st is a weekend or a holiday it goes
+   out on the next banking day. */
+function rentDay(y,m){var r=new Date(y,m,1),g=0;while(!isBankDay(r)&&g++<12)r.setDate(r.getDate()+1);return r;}
 function flowEvents(d){
   var dis=disabilityPayOn(d), gi=giPayOn(d), ev=liveFlow(d);
+  var rd=rentDay(d.getFullYear(),d.getMonth());
+  if(rd.getDate()!==1){
+    var rent=ev.filter(function(f){return f[1]==="RENT";});
+    ev=ev.filter(function(f){return f[1]!=="RENT";});
+    if(d.getDate()===rd.getDate())ev=ev.concat(rent.map(function(f){return [rd.getDate(),f[1],f[2]];}));
+  }
   if(dis)ev=ev.concat([[d.getDate(),"DISABILITY",dis]]);
   if(gi)ev=ev.concat([[d.getDate(),"GI BILL HOUSING",gi]]);
   return ev;}
@@ -843,7 +885,7 @@ function monthlySurplus(d){
   FLOW.forEach(function(f){if(ISACCT[f[1]])return;if(f[2]>0)inc+=f[2];else bills-=f[2];});
   var g=giFor(d);
   inc+=(d>=DIS_START?DISABILITY:0)+(g?g.amt:0);
-  return inc-bills-BASE_MIN-CAR_MIN-extraFor(d)-VAR_DAILY*30.4;
+  return inc-bills-BASE_MIN-CAR_MIN-plannedExtra(d)-VAR_DAILY*30.4;
 }
 function planWith(cutFn){
   var list=planAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};});
@@ -980,6 +1022,10 @@ function viewNow(){
       (short>0?'You\'re already <b class="num">'+money(short)+'</b> short of the bills between now and <b>'+(tr.date?fmtDate(tr.date):"—")+'</b>. You need <b class="num">'+money(need)+'</b> and you have '+money(bal)+'.'
        :can?'That\'s what you can spend without anything bouncing. Keeps <b class="num">'+money(RES)+'</b> back and still clears every bill through <b>'+(tr.date?fmtDate(tr.date):"—")+'</b>.'
        :'You clear every bill, but only just — cushion is <b class="num">'+money(cushion)+'</b>, inside the '+money(RES)+' buffer.')+'</p>'+
+    (function(){var cl=cutList();if(!cl.length)return '';
+      return '<p style="font-size:13px;line-height:1.55;margin:11px 0 0;padding-top:11px;border-top:1px solid var(--line);color:var(--tx)">'+
+        cl.map(function(c){return '<b style="color:#FFD60A">'+MONN[c.date.getMonth()]+' '+c.date.getDate()+' extra cut to '+money(c.sent)+'</b> (normally '+money(c.planned)+') \u2014 '+money(c.held)+' stays in checking';}).join('. ')+
+        '. That\u2019s what keeps every bill covered with at least '+money(EXTRA_FLOOR)+' left. It goes back to full on its own once the money is there.</p>';})()+
     (overBudget?'<p class="note" style="margin:11px 0 0;color:var(--amber)">The monthly pot is spent, so nothing further is reserved for it. Anything else you buy this month comes straight out of this cushion as you log it.</p>':'')+'</div>'+
 
   '<div class="card pad">'+
@@ -1605,7 +1651,7 @@ function fold(id,title,sub,html){
 document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.fold){FOLDS[d.dataset.fold]=d.open;
 }},true);
 function render(){
-  bust();if(RP.raf){cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
+  bust();try{computeCuts();}catch(e){_cuts={};bust();}if(RP.raf){cancelAnimationFrame(RP.raf);RP.raf=null;RP.last=0;}
   document.getElementById("nav").innerHTML=TABS.map(function(x){
     return '<button data-tab="'+x[0]+'" data-on="'+(tab===x[0])+'"><span class="dot"></span>'+x[1]+'</button>';}).join("");
   document.getElementById("mnav").innerHTML=TABS.map(function(x){
@@ -1690,7 +1736,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-09-16T22:40";
+var BUILD="2026-10-26T20:40";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
