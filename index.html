@@ -989,6 +989,7 @@ function viewNow(){
   var t=totals();
 
   var bills=fc.slice(0,HORIZON).map(function(d){
+    if(!d.items.length&&d.bal>=0)return '';
     var neg=d.bal<0,drip=d.drip,catchup=drip<VAR_DAILY-0.5;
     function line(name,amt,kind,it0){ /* kind: "in", "out", "drip" */
       var sk=it0&&it0.skipped;
@@ -1002,56 +1003,56 @@ function viewNow(){
         :'<span style="color:'+col+';font-weight:'+w+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+name+'</span>';
       return '<div style="display:grid;grid-template-columns:1fr 72px;gap:8px;font-size:12.5px;line-height:20px;'+it+'">'+label+
         '<span class="num" style="text-align:right;color:'+col+strike+'">'+(kind==="in"?"+":"\u2212")+money(amt)+'</span></div>';}
-    var lines=d.items.map(function(it){return line(esc(it.name),it.amt,it.amt>0?"in":"out",it);}).join("")+
-              line("Everyday spending"+(catchup?" \u00b7 catch-up":""),drip,"drip");
+    var lines=d.items.map(function(it){return line(esc(it.name),it.amt,it.amt>0?"in":"out",it);}).join("")||
+              '<div class="note" style="line-height:20px">Everyday spending</div>';
     return '<div style="display:grid;grid-template-columns:74px 1fr 78px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);align-items:start;'+(neg?'background:rgba(227,25,55,.08)':'')+'">'+
      '<div style="font-size:11.5px;line-height:20px;font-weight:'+(d.items.length?700:400)+';color:'+(neg?"var(--red)":d.items.length?"var(--mut)":"var(--dim)")+'">'+fmtDate(d.date)+'</div>'+
      '<div style="min-width:0">'+lines+'</div>'+
      '<div class="num" style="text-align:right;font-size:13px;line-height:20px;font-weight:700;color:'+(neg?"var(--red)":"var(--tx)")+'">'+(neg?"\u2212":"")+money(d.bal)+'</div></div>';})
     .join("");
 
-  return '<div class="grid">'+
-  '<div class="card pad">'+
-    '<div class="eyebrow">What\'s in Chase Checking right now</div>'+
-    '<div style="display:flex;align-items:center;gap:11px;margin-top:11px;flex-wrap:wrap">'+
-      '<span class="num" style="font-size:23px;color:var(--dim)">$</span>'+
-      '<input type="number" inputmode="decimal" id="cashin" value="'+typed+'" style="font-size:22px;width:152px" aria-label="Chase Checking balance">'+
-      '<div class="note" style="color:'+(stale?"var(--amber)":"var(--dim)")+'">'+
-        (state.cash.updated?"Updated "+new Date(state.cash.updated).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})+(stale?" — refresh it":""):"Not set yet")+'</div></div>'+
-    (since>0?'<div class="note" style="margin-top:11px;color:var(--amber)">Less <b class="num">'+money(since)+'</b> logged since then — working balance <b class="num">'+money(bal)+'</b>. Retype the balance from your bank and this clears.</div>':'')+
-    '<div class="note" style="margin-top:13px;padding-top:12px;border-top:1px solid var(--line)">'+
-      (t.paid?'<b>'+t.paid+'</b> paid-off account'+(t.paid>1?'s no longer draft':' no longer drafts')+' — '+money(t.freed)+'/mo of drafts removed from everything below. ':'')+
-      disNote()+'</div></div>'+
+  var cuts=(function(){var cl=cutList();if(!cl.length)return '';
+      return '<p class="note" style="margin:10px 0 0;color:var(--tx)">'+
+        cl.map(function(c){return '<b style="color:#FFD60A">'+MONN[c.date.getMonth()]+' '+c.date.getDate()+' extra cut to '+money(c.sent)+'</b> (normally '+money(c.planned)+')';}).join('. ')+
+        ' so every bill stays covered.</p>';})();
+  return '<div class="hero" style="border-left:3px solid '+(can?"var(--green)":"var(--red)")+'">'+
+    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+      '<span class="eyebrow">Chase checking</span>'+
+      '<span class="num" style="font-size:17px;color:var(--dim)">$</span>'+
+      '<input type="number" inputmode="decimal" id="cashin" value="'+typed+'" style="font-size:17px;width:120px" aria-label="Chase Checking balance">'+
+      '<span class="note" style="color:'+(stale?"var(--amber)":"var(--dim)")+'">'+
+        (state.cash.updated?(stale?"Refresh it · ":"")+new Date(state.cash.updated).toLocaleString("en-US",{month:"short",day:"numeric"}):"Not set")+'</span></div>'+
+    (since>0?'<div class="note" style="margin-top:8px;color:var(--amber)">Less '+money(since)+' logged since — working balance '+money(bal)+'.</div>':'')+
+    '<div class="eyebrow" style="margin-top:16px">'+(short>0?"Short before "+(tr.date?fmtDate(tr.date):"payday"):can?"Safe to spend today":"Spend nothing extra today")+'</div>'+
+    '<div class="num big" style="font-size:40px;margin:6px 0 4px;color:'+(can?"var(--green)":"var(--red)")+'">'+(short>0?"−"+money(short):money(safe))+'</div>'+
+    '<div class="note">'+(short>0?'Add '+money(short)+' to checking before '+(tr.date?fmtDate(tr.date):"then")+' or a bill bounces.'
+       :'Every bill covered through '+(tr.date?fmtDate(tr.date):"the forecast")+', '+money(RES)+' kept back.')+'</div>'+
+    cuts+
+    (overBudget?'<p class="note" style="margin:10px 0 0;color:var(--amber)">This month’s spending pot is used up.</p>':'')+'</div>'+
 
-  '<div class="hero" style="border-left:3px solid '+(can?"var(--green)":"var(--red)")+'">'+
-    '<div class="eyebrow">'+(short>0?"Do not spend anything":can?"Safe to spend today":"Spend nothing extra today")+'</div>'+
-    '<div class="num big" style="font-size:40px;margin:8px 0 6px;color:'+(can?"var(--green)":"var(--red)")+'">'+(short>0?"−"+money(short):money(safe))+'</div>'+
-    '<p style="font-size:13px;line-height:1.55;margin:0;color:var(--tx)">'+
-      (short>0?'You\'re already <b class="num">'+money(short)+'</b> short of the bills between now and <b>'+(tr.date?fmtDate(tr.date):"—")+'</b>. You need <b class="num">'+money(need)+'</b> and you have '+money(bal)+'.'
-       :can?'That\'s what you can spend without anything bouncing. Keeps <b class="num">'+money(RES)+'</b> back and still clears every bill through <b>'+(tr.date?fmtDate(tr.date):"—")+'</b>.'
-       :'You clear every bill, but only just — cushion is <b class="num">'+money(cushion)+'</b>, inside the '+money(RES)+' buffer.')+'</p>'+
-    (function(){var cl=cutList();if(!cl.length)return '';
-      return '<p style="font-size:13px;line-height:1.55;margin:11px 0 0;padding-top:11px;border-top:1px solid var(--line);color:var(--tx)">'+
-        cl.map(function(c){return '<b style="color:#FFD60A">'+MONN[c.date.getMonth()]+' '+c.date.getDate()+' extra cut to '+money(c.sent)+'</b> (normally '+money(c.planned)+') \u2014 '+money(c.held)+' stays in checking';}).join('. ')+
-        '. That\u2019s what keeps every bill covered with at least '+money(EXTRA_FLOOR)+' left. It goes back to full on its own once the money is there.</p>';})()+
-    (overBudget?'<p class="note" style="margin:11px 0 0;color:var(--amber)">The monthly pot is spent, so nothing further is reserved for it. Anything else you buy this month comes straight out of this cushion as you log it.</p>':'')+'</div>'+
+  viewReplay()+
 
-  '<div class="card pad">'+
-    '<div class="eyebrow">How that adds up, through '+(tr.date?fmtDate(tr.date):"then")+'</div>'+
-    '<div style="margin-top:9px">'+
+  '<div class="card"><div style="padding:14px 16px;border-bottom:1px solid var(--line)">'+
+    '<div style="font-size:14px;font-weight:700">What\'s coming</div>'+
+    '<div class="note">Tap a bill or paycheck to cross it off for the month. <b style="color:#FFD60A">Yellow</b> = extra payments. Balances include $'+VAR_DAILY+'/day everyday spending.</div></div>'+
+    bills+'</div>'+
+
+  fold("adds","How that adds up","thinnest day "+(tr.date?fmtDate(tr.date):"—")+" · "+signed(tr.bal),
+    '<div style="padding:0 6px">'+
       lineRow("Chase balance you typed in",typed)+
       (since>0?lineRow("Logged since you typed it",-since):"")+
       (inFlow>0?lineRow("Pay landing before then",inFlow):"")+
       lineRow("Bills that draft before then",-outFlow)+
-      lineRow("Everyday spending · $"+VAR_DAILY+" a day after today",-dripTot,true)+
-      '<div style="display:flex;justify-content:space-between;gap:10px;padding:11px 0 0;margin-top:6px;border-top:1px solid var(--line2);font-size:13.5px;font-weight:800">'+
+      lineRow("Everyday spending · $"+VAR_DAILY+" a day",-dripTot,true)+
+      '<div style="display:flex;justify-content:space-between;gap:10px;padding:11px 0 6px;margin-top:6px;border-top:1px solid var(--line2);font-size:13.5px;font-weight:800">'+
         '<span>Left on '+(tr.date?fmtDate(tr.date):"the thinnest day")+'</span>'+
-        '<span class="num" style="color:'+(tr.bal<0?"var(--red)":"var(--green)")+'">'+signed(tr.bal)+'</span></div></div>'+
-    (since>0?'<p class="note" style="margin:12px 0 0;color:var(--amber)">If the balance you typed already had these purchases taken out, delete them from Spending or retype the balance — otherwise the same money is counted twice.</p>':'')+'</div>'+
+        '<span class="num" style="color:'+(tr.bal<0?"var(--red)":"var(--green)")+'">'+signed(tr.bal)+'</span></div>'+
+      '<div class="note" style="padding:6px 0">Before next payday: '+money(before)+(pi>-1?" (pay lands "+fmtDate(fc[pi].date)+")":"")+'. '+
+        (t.paid?t.paid+' paid-off account'+(t.paid>1?'s':'')+' freed '+money(t.freed)+'/mo. ':'')+disNote()+'</div></div>')+
 
-  '<div class="card pad">'+
-    '<div class="eyebrow">Can I afford it</div>'+
-    '<div style="display:flex;gap:7px;margin-top:11px">'+
+  fold("afford","Can I afford it","",
+    '<div style="padding:0 6px 6px">'+
+    '<div style="display:flex;gap:7px;margin-top:2px">'+
       [["once","One time"],["monthly","Every month"]].map(function(m){var on=spendMode===m[0];
         return '<button class="btn'+(on?'':' ghost')+'" data-spendmode="'+m[0]+'" style="padding:8px 14px;font-size:12px">'+m[1]+'</button>';}).join("")+'</div>'+
     '<div style="display:flex;align-items:center;gap:11px;margin:11px 0 0;flex-wrap:wrap">'+
@@ -1063,19 +1064,30 @@ function viewNow(){
     '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:11px">'+
       (spendMode==="monthly"?[100,250,500,750]:[100,500,1000,3000]).map(function(v){return '<button class="btn ghost" data-spend="'+v+'">$'+v.toLocaleString("en-US")+'</button>';}).join("")+
       '<button class="btn ghost" data-spend="0">Clear</button></div>'+
-    '<div id="spendout"></div></div>'+
-
-  '<div class="tiles">'+
-    tile("◉","#3E6AE1","Need today",money(need),short>0?money(short)+" more than you have":money(cushion)+" of cushion")+
-    tile("→","#3E6AE1","Before next payday",money(before),pi>-1?"lands "+fmtDate(fc[pi].date):"none in range")+
-    tile("▽","#E31937","Thinnest day",tr.date?fmtDate(tr.date):"—","hits "+signed(tr.bal),tr.bal<0?"var(--red)":"var(--tx)")+
-  '</div>'+
-
-  '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
-    '<div style="font-size:14px;font-weight:700">What\'s coming \u2014 the next three months</div>'+
-    '<div class="note">Running balance after each hit, looking '+HORIZON+' days ahead so the next rent and the one after it are both in view. Paid-off accounts are gone from this list. Every day reserves exactly $'+VAR_DAILY+' of everyday spending, no more; whatever you do not spend on a day simply stays in your balance.</div>'+
-    '<div class="note" style="margin-top:6px;color:var(--tx)"><b style="color:#FFD60A">Yellow</b> rows are extra payments, split across accounts the way they will actually land. <b>Already paid a bill early, or a paycheck already hit checking?</b> Tap its name to cross it off for that month \u2014 it comes back next month. Tap again to undo.</div></div>'+
-    bills+'</div></div>';
+    '<div id="spendout"></div></div>');
+}
+/* The first thing he sees: on track or not. Off track if checking goes
+   negative anywhere in the forecast, or if debt-free lands after GOAL_BY.
+   The catch-up figure is the flat monthly add to the extra that brings the
+   plan back to GOAL_BY. */
+var GOAL_BY=new Date(2027,8,1);
+function catchUp(){
+  var goal=mi(GOAL_BY), list=planAccounts().map(function(x){return {name:x.name,bal:x.current,apr:x.apr,min:x.min,kind:x.kind,limit:x.limit};});
+  for(var a=50;a<=3000;a+=50){
+    if(simulate(list,function(d){return BASE_MIN+extraFor(d)+a;},420).zeroIdx<=goal)return a;}
+  return null;}
+function viewStatus(){
+  var p=plan(), goal=mi(GOAL_BY), tr=troughOf(workingBalance()).tr;
+  var late=p.done?p.zeroIdx-goal:99, cashBad=tr.bal<0, ok=!cashBad&&late<=0;
+  var col=ok?"var(--green)":"var(--red)", lines=[];
+  if(cashBad)lines.push('Checking runs '+money(-tr.bal)+' short on '+fmtDate(tr.date)+'.');
+  if(late>0){var cu=catchUp();
+    lines.push('Debt-free '+(p.done?keyFromMi(p.zeroIdx):"not in sight")+', '+late+' month'+(late>1?'s':'')+' past your '+keyFromMi(goal)+' goal.'+
+      (cu?' About '+money(cu)+'/mo more to debt gets it back.':''));}
+  if(ok)lines.push('Debt-free '+keyFromMi(p.zeroIdx)+(late<0?', '+(-late)+' month'+(late<-1?'s':'')+' ahead of':', right on')+' your '+keyFromMi(goal)+' goal. Every bill covered.');
+  return '<div class="card pad" style="border-left:3px solid '+col+'">'+
+    '<div style="font-size:22px;font-weight:800;letter-spacing:-.01em;color:'+col+'">'+(ok?"On track":"Off track")+'</div>'+
+    '<div style="font-size:13px;line-height:1.5;margin-top:4px;color:var(--tx)">'+lines.join(' ')+'</div></div>';
 }
 
 /* ---------------- SPENDING ---------------- */
@@ -1669,7 +1681,7 @@ function render(){
   document.getElementById("sidecars").textContent=(c.done?"Cars "+keyFromMi(c.zeroIdx):"")+" · "+p.months+" mo left";
   var tg=targetAccount(),u=utilNow();
   document.getElementById("view").innerHTML = '<div class="grid">'+(
-    tab==="today"? viewReplay()+viewNow()+fold("spend","Spending",(todayLeft()<0?"−"+money(todayLeft())+" over today":money(todayLeft())+" left today"),viewSpend()) :
+    tab==="today"? viewStatus()+viewNow()+fold("spend","Spending",(todayLeft()<0?"−"+money(todayLeft())+" over today":money(todayLeft())+" left today"),viewSpend()) :
     tab==="plan"? viewDescent()+
       fold("wind","Extra cash came in",(Number(windTest)>0?money(windTest):"where to send it"),viewWind())+
 
@@ -1744,7 +1756,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-11-01T21:15";
+var BUILD="2026-11-01T21:45";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
