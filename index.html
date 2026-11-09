@@ -396,6 +396,15 @@ var tT;function toast(m){var e=document.getElementById("toast");if(!e)return;e.t
    Balances already in the app before this shipped count as confirmed on
    BAL_ASOF, so nothing moves retroactively. */
 var BAL_ASOF="2026-09-15";
+/* One-time balance reductions that don't touch checking: [y, m0, day, account, amount, label].
+   The 2026 federal refund is kept by the IRS and applied to the 2025 balance
+   (estimated Nov 2026: ~$3,500; $3,000 used to stay conservative). Assumed by
+   15 Mar 2027 if he files in early February. Once the CP49 notice arrives,
+   type the real IRS balance and this stops mattering (walk() ignores dates
+   before an account's confirmed date). */
+var OFFSETS=[[2027,2,15,"IRS 2025",3000,"2026 tax refund applied by the IRS"]];
+function offsetOn(d,name){var t=0;OFFSETS.forEach(function(o){if(o[3]===name&&d.getFullYear()===o[0]&&d.getMonth()===o[1]&&d.getDate()===o[2])t+=o[4];});return t;}
+function offsetMonth(y,m,name){var t=0;OFFSETS.forEach(function(o){if(o[3]===name&&o[0]===y&&o[1]===m)t+=o[4];});return t;}
 var _est=null;
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function parseYmd(k){var p=String(k||BAL_ASOF).split("-");return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));}
@@ -418,6 +427,7 @@ function walk(end){
   for(var g=0;d<=end&&g<1200;g++,d.setDate(d.getDate()+1)){
     var M=snap(d);
     var dom=d.getDate(),last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+    A.forEach(function(x){if(d>x.from&&x.bal>0){var o=offsetOn(d,x.name);if(o){var q=Math.min(o,x.bal);x.bal-=q;x.paid+=q;x.moved=true;if(x.bal<0.5)x.bal=0;}}});
     A.forEach(function(x){
       if(d<=x.from||x.bal<=0)return;
       if(isSkipped(d,x.name))return; /* marked paid early: already inside the balance */
@@ -503,6 +513,7 @@ function simulate(list,poolFn,maxMonths){
   var k=0;
   for(;k<maxMonths&&tot>0.5;k++){
     var pool=poolFn(d,i0+k);
+    A.forEach(function(x){var o=offsetMonth(d.getFullYear(),d.getMonth(),x.name);if(o&&x.bal>0){x.bal=Math.max(0,x.bal-o);}});
     A.forEach(function(x){if(x.bal>0){var it=x.bal*x.apr/100/12;x.bal+=it;interest+=it;}});
     A.forEach(function(x){if(x.bal>0&&pool>0){var p=Math.min(x.min,x.bal,pool);x.bal-=p;pool-=p;}});
     var live=A.filter(function(x){return x.bal>0;}).map(function(x){
@@ -839,6 +850,7 @@ function viewDescent(){
   '<div class="tiles">'+
     tile("◇","#3E6AE1","Debt-free",freeKey,monthsLeft+" months · cars "+carKey)+
     tile("⌂","#22C55E","House fund by Jun 2028",(function(){var h=houseFund();return h.months?money(h.total):"—";})(),(function(){var h=houseFund();return h.months?"Toyota paid off "+h.toyotaGone+", then "+money(h.monthly)+"/mo saved "+MONN[h.first.getMonth()]+"–Jun 2028":"Toyota isn\u2019t paid off before Jun 2028";})(),"#22C55E")+
+    OFFSETS.map(function(o){return tile("$","#22C55E","Tax refund \u2192 "+o[3],money(o[4]),o[5]+" \u00b7 expected "+MONN[o[1]]+" "+o[0],"#22C55E");}).join("")+
     tile("✓","#22C55E","Accounts killed",t.paid+" of "+t.count,money(t.freed)+"/mo rolled into the target")+
     tile("↺","#3E6AE1","Minimums due",money(t.min),"every month, non-auto")+
     tile("↑","#FFD60A","Next extra payment",money(nx.amt),MONN[nx.date.getMonth()]+" "+nx.date.getDate()+" · "+nx.parts.join(" + "),"#FFD60A")+
@@ -1756,7 +1768,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-11-01T21:45";
+var BUILD="2026-11-08T18:50";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
