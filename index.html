@@ -308,8 +308,8 @@ var SEED=[
     built into the plan, so APR 0. */
  ["IRS 2025",17876,10.0,530,21,"LOAN",0],["UTAH TAX PLAN",5156,0.0,752,21,"LOAN",0],
  /* Cybertruck: bought Nov 2026 in Jennifer's name, replaced the Ally Tesla (sold, Ally loan paid off).
-    $68,000 financed, first payment 4 Jan 2027. 6.2% APR, 84 months, $999 a month. */
- ["CYBERTRUCK",68000,6.2,999,4,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
+    $68,000 financed, first payment 18 Feb 2027. 5.9% APR, 84 months, ~$999 a month (confirm on the contract). */
+ ["CYBERTRUCK",68000,5.9,999,18,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
 
 /* Open cards with nothing on them. They never draft and they are not debt,
    but their limits are most of your available credit, so they belong in the
@@ -327,9 +327,9 @@ var BASE_MIN=SEED.filter(function(s){return !NOPLAN[s[0]];}).reduce(function(a,s
 var CAR_MIN=SEED.filter(function(s){return NOPLAN[s[0]];}).reduce(function(a,s){return a+s[3];},0);
 
 var FLOW=[[1,"RENT",-3000],[1,"CAP ONE VENTURE",-25],[1,"AFFIRM AMZN 4",-54],[1,"AFFIRM AMZN 5",-72],
-[4,"UPSTART 1",-320],[4,"CYBERTRUCK",-999],[2,"BRIGHTWAY",-144],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
+[4,"UPSTART 1",-320],[2,"BRIGHTWAY",-144],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
 [7,"SPARROW",-42],[8,"BEST BUY",-40],[9,"AMEX ADACY",-40],[12,"USAA",-45],[12,"UTILITIES",-375],
-[17,"KLARNA",-213],[21,"UPGRADE",-170],
+[17,"KLARNA",-213],[18,"CYBERTRUCK",-999],[21,"UPGRADE",-170],
 [15,"CAP ONE SAVOR",-40],[15,"CREDIT ONE",-86],[15,"SEEN",-55],[17,"CHASE",-375],
 [20,"CITI COSTCO",-120],[21,"UTAH TAX PLAN",-752],[21,"IRS 2025",-530],[22,"PAYCHECK 2",5800],
 [22,"PAYPAL",-32],[22,"UPSTART 3",-243],[22,"AFFIRM AMZN 1",-43],[23,"AFFIRM AMZN 2",-109],
@@ -417,7 +417,7 @@ function confirmBal(name){state.acctAt=state.acctAt||{};state.acctAt[name]=ymd(n
    month and exactly where that month's extra payment went — so a card the
    extra clears in October stops getting extra (and stops drafting) after. */
 /* Accounts that start later than BAL_ASOF: no interest or drafts before this date. */
-var SEED_FROM={"CYBERTRUCK":"2026-12-05"};
+var SEED_FROM={"CYBERTRUCK":"2027-01-19"};
 function walk(end){
   var at=state.acctAt||{};
   var A=SEED.map(function(s){var f=parseYmd(at[s[0]]||SEED_FROM[s[0]]);
@@ -1773,7 +1773,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-11-10T19:10";
+var BUILD="2026-11-10T19:20";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
