@@ -307,7 +307,9 @@ var SEED=[
     balance $5,156.13 per Utah on 14 Sep 2026, about seven payments left; interest is
     built into the plan, so APR 0. */
  ["IRS 2025",17876,10.0,530,21,"LOAN",0],["UTAH TAX PLAN",5156,0.0,752,21,"LOAN",0],
- ["ALLY",34975,1.99,905,28,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
+ /* Cybertruck: bought Nov 2026 in Jennifer's name, replaced the Ally Tesla (sold, Ally loan paid off).
+    $68,000 financed, first payment 4 Jan 2027. 6.2% APR, 84 months, $999 a month. */
+ ["CYBERTRUCK",68000,6.2,999,4,"AUTO",0],["TOYOTA FINANCIAL",39038,8.01,769,29,"AUTO",0]];
 
 /* Open cards with nothing on them. They never draft and they are not debt,
    but their limits are most of your available credit, so they belong in the
@@ -315,7 +317,7 @@ var SEED=[
 var OPEN_ZERO=[["MILITARY STAR",5700],["MISSION LANE",1350],["MISSION LANE 2",750],
   ["OLLO",1000],["PETAL",600],["AMAZON STORE",100],["PAYPAL CREDIT",110]];
 var ZERO_LIMIT=OPEN_ZERO.reduce(function(a,x){return a+x[1];},0);
-var NOPLAN={"ALLY":1,"TOYOTA FINANCIAL":1};
+var NOPLAN={"CYBERTRUCK":1,"TOYOTA FINANCIAL":1};
 var ISACCT={};SEED.forEach(function(s){ISACCT[s[0]]=1;});
 
 /* Total contractual minimums, including accounts already paid off. When one
@@ -325,14 +327,14 @@ var BASE_MIN=SEED.filter(function(s){return !NOPLAN[s[0]];}).reduce(function(a,s
 var CAR_MIN=SEED.filter(function(s){return NOPLAN[s[0]];}).reduce(function(a,s){return a+s[3];},0);
 
 var FLOW=[[1,"RENT",-3000],[1,"CAP ONE VENTURE",-25],[1,"AFFIRM AMZN 4",-54],[1,"AFFIRM AMZN 5",-72],
-[4,"UPSTART 1",-320],[2,"BRIGHTWAY",-144],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
+[4,"UPSTART 1",-320],[4,"CYBERTRUCK",-999],[2,"BRIGHTWAY",-144],[5,"AFFIRM VIRTUAL",-562],[7,"PAYCHECK 1",4773],
 [7,"SPARROW",-42],[8,"BEST BUY",-40],[9,"AMEX ADACY",-40],[12,"USAA",-45],[12,"UTILITIES",-375],
 [17,"KLARNA",-213],[21,"UPGRADE",-170],
 [15,"CAP ONE SAVOR",-40],[15,"CREDIT ONE",-86],[15,"SEEN",-55],[17,"CHASE",-375],
 [20,"CITI COSTCO",-120],[21,"UTAH TAX PLAN",-752],[21,"IRS 2025",-530],[22,"PAYCHECK 2",5800],
 [22,"PAYPAL",-32],[22,"UPSTART 3",-243],[22,"AFFIRM AMZN 1",-43],[23,"AFFIRM AMZN 2",-109],
-[25,"CHARIZARD",-144],[25,"CAR INSURANCE",-230],[27,"AFFIRM AMZN 3",-51],[28,"UPSTART 2",-425],
-[16,"CONCORA CARD FEES",-10],[28,"ALLY",-905],[28,"PHONE",-180],[29,"TOYOTA FINANCIAL",-769],[30,"APPLE CARD",-20]];
+[25,"CHARIZARD",-144],[25,"CAR INSURANCE",-285],[27,"AFFIRM AMZN 3",-51],[28,"UPSTART 2",-425],
+[16,"CONCORA CARD FEES",-10],[28,"PHONE",-180],[29,"TOYOTA FINANCIAL",-769],[30,"APPLE CARD",-20]];
 /* The extra goes out the day after the first paycheck of the month, once rent
    has cleared. Sending it on the 23rd put it on the wrong side of rent and
    pushed the first week of the following month under. */
@@ -414,9 +416,11 @@ function confirmBal(name){state.acctAt=state.acctAt||{};state.acctAt[name]=ymd(n
    Records, for each month it passes through, the balances going into that
    month and exactly where that month's extra payment went — so a card the
    extra clears in October stops getting extra (and stops drafting) after. */
+/* Accounts that start later than BAL_ASOF: no interest or drafts before this date. */
+var SEED_FROM={"CYBERTRUCK":"2026-12-05"};
 function walk(end){
   var at=state.acctAt||{};
-  var A=SEED.map(function(s){var f=parseYmd(at[s[0]]);
+  var A=SEED.map(function(s){var f=parseYmd(at[s[0]]||SEED_FROM[s[0]]);
     return {name:s[0],apr:s[2],min:s[3],day:s[4],kind:s[5],limit:s[6]||0,noplan:!!NOPLAN[s[0]],
             bal:typedBal(s),from:f,moved:false,paid:0,interest:0};});
   var start=A.reduce(function(m,x){return x.from<m?x.from:m;},end);
@@ -565,7 +569,7 @@ function plan(){
    whole monthly debt outlay goes to the Toyota loan (8.01%) until it is gone.
    From the month after that, the outlay plus the freed Toyota payment is saved
    in a house fund through HOUSE_BY (June 2028 — two years at Murdock). Only
-   after that does the Ally loan (1.99%) get anything beyond its minimum. */
+   after that does the Cybertruck loan get anything beyond its minimum. */
 var HOUSE_BY=new Date(2028,5,1), FAST_CAR="TOYOTA FINANCIAL";
 var _cars2=null;
 function carPlan(){
@@ -672,6 +676,7 @@ function liveFlow(when){
   var startBal=function(n){return P?Math.max(0,P.start[n]||0):Math.max(0,(E[n]||{bal:0}).bal);};
   FLOW.forEach(function(f){
     if(!ISACCT[f[1]]){out.push(f);return;}
+    if(SEED_FROM[f[1]]){var sf=parseYmd(SEED_FROM[f[1]]),sd=new Date(when.getFullYear(),when.getMonth(),f[0]);if(sd<=sf)return;}
     var b=startBal(f[1]);
     if(b<=0)return;
     out.push([f[0],f[1],-Math.min(Math.abs(f[2]),Math.round(b))]);
@@ -1181,7 +1186,7 @@ function viewAccounts(){
      '<div class="scroll"><table style="min-width:700px">'+acctHead()+'<tbody>'+a.map(acctRow).join("")+'</tbody></table></div></div>'+
    '<div class="card"><div style="padding:15px 16px;border-bottom:1px solid var(--line)">'+
      '<div style="font-size:14px;font-weight:700">Car loans · '+money(carB)+'</div>'+
-     '<div class="note">Outside the plan. They take their minimums until '+(p.done?keyFromMi(p.zeroIdx):"the plan clears")+', then everything goes to the Toyota loan, then the house fund through Jun 2028, then the Ally loan; they clear by '+(c.done?keyFromMi(c.zeroIdx):"—")+'.</div></div>'+
+     '<div class="note">Outside the plan. They take their minimums until '+(p.done?keyFromMi(p.zeroIdx):"the plan clears")+', then everything goes to the Toyota loan, then the house fund through Jun 2028, then the Cybertruck; they clear by '+(c.done?keyFromMi(c.zeroIdx):"—")+'.</div></div>'+
      '<div class="scroll"><table style="min-width:700px">'+acctHead()+'<tbody>'+cars_.map(acctRow).join("")+'</tbody></table></div></div></div>';
 }
 
@@ -1768,7 +1773,7 @@ document.addEventListener("change",function(e){
    long time. Every minute, and whenever the app comes back to the front, it
    fetches the live page fresh; if the BUILD stamp there is different, it
    reloads itself onto the new version. Change BUILD on every deploy. */
-var BUILD="2026-11-08T18:50";
+var BUILD="2026-11-10T19:00";
 function checkBuild(){
   if(location.protocol!=="https:")return;
   fetch(location.pathname+"?build="+Date.now(),{cache:"no-store"})
